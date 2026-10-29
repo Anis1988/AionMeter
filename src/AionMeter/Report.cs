@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using AionMeter.Core;
 
@@ -11,11 +10,10 @@ public static class Report
     /// <param name="count">How many top players to include; 0 or less means everyone.</param>
     public static string Build(IEnumerable<CombatantRow> rows, int count = 0)
     {
+        // One line, e.g. "1-Batte 456.7k  2-Grop 310.2k  3-Lumi 98.4k"
         var list = rows.OrderBy(r => r.Rank);
-        var sb = new StringBuilder();
-        foreach (var r in count > 0 ? list.Take(count) : list)
-            sb.AppendLine($"{r.Rank}. {r.Name} {r.DamageText}");
-        return sb.ToString().TrimEnd();
+        return string.Join("  ", (count > 0 ? list.Take(count) : list)
+            .Select(r => $"{r.Rank}-{r.Name} {r.DamageText}"));
     }
 
     /// <summary>Copies the list; returns false if there was nothing to copy or the clipboard was busy.</summary>
