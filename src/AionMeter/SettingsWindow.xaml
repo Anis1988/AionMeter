@@ -1,0 +1,53 @@
+<Window x:Class="AionMeter.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Aion Meter - Settings" Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI" FontSize="12" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="14">
+        <TextBlock Text="Game folder (where Chat.log and system.cfg are)" Margin="0,0,0,4" />
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="GamePathBox" Padding="3" />
+            <Button Grid.Column="1" Content="Browse..." Margin="6,0,0,0" Style="{StaticResource DarkButton}"
+                    Click="Browse_Click" />
+        </Grid>
+        <TextBlock x:Name="PathStatus" Margin="0,-8,0,12" FontSize="11" />
+
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Your character name" Margin="0,0,0,4" />
+                <TextBox x:Name="NameBox" Padding="3" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Your class" Margin="0,0,0,4" />
+                <ComboBox x:Name="ClassBox" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Text="New fight after this many seconds without damage" Margin="0,0,0,4" />
+        <TextBox x:Name="IdleBox" Width="80" HorizontalAlignment="Left" Padding="3" Margin="0,0,0,12" />
+
+        <TextBlock Text="Window opacity" Margin="0,0,0,4" />
+        <Slider x:Name="OpacitySlider" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                Margin="0,0,0,12" />
+
+        <CheckBox x:Name="MonstersBox" Content="Show monsters in the list" Foreground="{StaticResource TextBrush}"
+                  Margin="0,0,0,6" />
+        <CheckBox x:Name="SummonsBox" Content="Count my summons (spirits, servants) as my damage"
+                  Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Save" IsDefault="True" Style="{StaticResource DarkButton}" Click="Save_Click" />
+            <Button Content="Cancel" IsCancel="True" Margin="8,0,0,0" Style="{StaticResource DarkButton}" />
+        </StackPanel>
+    </StackPanel>
+</Window>
