@@ -45,7 +45,6 @@ public sealed class MeterController
         var o = Tracker.Options;
         o.YourName = Settings.CharacterName.Trim();
         o.YourClass = Settings.YourClass;
-        o.IdleSeconds = Math.Max(3, Settings.IdleSeconds);
         o.MergeSummons = Settings.MergeSummons;
         if (reader == null || !string.Equals(reader.Path, Settings.ChatLogPath, StringComparison.OrdinalIgnoreCase))
             reader = new ChatLogReader(Settings.ChatLogPath);
@@ -107,7 +106,7 @@ public sealed class MeterController
 
     void Refresh(bool force)
     {
-        var enc = Tracker.Latest;
+        var enc = Tracker.Current;
         if (!force && Tracker.Version == shownVersion && ReferenceEquals(enc, shownEncounter))
             return;
         shownVersion = Tracker.Version;

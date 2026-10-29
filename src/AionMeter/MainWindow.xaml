@@ -22,7 +22,9 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button x:Name="PauseButton" Style="{StaticResource IconButton}" Content="&#xE769;"
                             ToolTip="Pause" Click="Pause_Click" />
-                    <Button Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Reset all fights"
+                    <Button Style="{StaticResource IconButton}" Content="&#xE8C8;"
+                            ToolTip="Copy everyone's damage" Click="Copy_Click" />
+                    <Button Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Reset (start over)"
                             Click="Reset_Click" />
                     <Button Style="{StaticResource IconButton}" Content="&#xE8FD;" ToolTip="Full list"
                             Click="Details_Click" />

@@ -89,18 +89,21 @@ public class CombatTrackerTests
     }
 
     [Fact]
-    public void StartsNewFightAfterIdle()
+    public void KeepsCountingUntilReset()
     {
         var t = Run(
             "2026.10.28 17:00:00 : You inflicted 1,000 damage on Mob A.",
             "2026.10.28 17:00:05 : You inflicted 1,000 damage on Mob A.",
-            "2026.10.28 17:01:00 : You inflicted 500 damage on Mob B.");
+            "2026.10.28 17:30:00 : You inflicted 500 damage on Mob B.",
+            "2026.10.28 17:30:03 : You inflicted 500 damage on Mob B.");
 
-        Assert.Single(t.History);
-        Assert.Equal(2000, t.History[0].Combatants[LogParser.You].Damage);
-        Assert.Equal(500, t.Current.Combatants[LogParser.You].Damage);
-        Assert.Equal(2500, t.Session.Combatants[LogParser.You].Damage);
-        Assert.Equal(6, t.Session.Seconds);
+        Assert.Equal(3000, t.Current.Combatants[LogParser.You].Damage);
+        // The 30-minute break doesn't count as combat time.
+        Assert.Equal(8, t.Current.Seconds);
+
+        t.Reset();
+        Assert.True(t.Current.IsEmpty);
+        Assert.Equal(0, t.Current.Seconds);
     }
 
     [Fact]

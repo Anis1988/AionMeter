@@ -20,7 +20,6 @@ public sealed class Settings
     public string GamePath { get; set; } = @"C:\GamezAION 4.8\GamezAION 4.8";
     public string CharacterName { get; set; } = "";
     public AionClass YourClass { get; set; } = AionClass.Unknown;
-    public int IdleSeconds { get; set; } = 20;
     public bool ShowMonsters { get; set; }
     public bool MergeSummons { get; set; } = true;
     public double Opacity { get; set; } = 0.92;

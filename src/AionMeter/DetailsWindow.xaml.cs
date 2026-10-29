@@ -1,32 +1,16 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Threading;
 using AionMeter.Core;
 
 namespace AionMeter;
 
 public partial class DetailsWindow : Window
 {
-    /// <summary>An entry in the fight picker.</summary>
-    sealed class FightChoice(string title, Func<Encounter> resolve, int key) : Observable
-    {
-        string title = title;
-
-        public string Title { get => title; set => Set(ref title, value); }
-        public Func<Encounter> Resolve { get; } = resolve;
-        public int Key { get; } = key;
-    }
-
-    const int LiveKey = -1;
-    const int SessionKey = 0;
-
     readonly MeterController controller;
     readonly ObservableCollection<CombatantRow> rows = [];
-    readonly ObservableCollection<FightChoice> fights = [];
-    Encounter? shown;
-    bool updatingFights;
 
     public DetailsWindow(MeterController controller)
     {
@@ -39,7 +23,6 @@ public partial class DetailsWindow : Window
         foreach (var p in new[] { "Rank", "Name", "ClassName", "Damage", "Dps", "Percent", "Hits", "CritRate", "MaxHit" })
             view.LiveSortingProperties.Add(p);
 
-        EncounterBox.ItemsSource = fights;
         MonstersBox.IsChecked = controller.Settings.ShowMonsters;
 
         controller.Updated += Refresh;
@@ -60,11 +43,7 @@ public partial class DetailsWindow : Window
 
     void Refresh()
     {
-        UpdateFightList();
-        var choice = EncounterBox.SelectedItem as FightChoice ?? fights[0];
-        var enc = choice.Resolve();
-        shown = enc;
-
+        var enc = controller.Tracker.Current;
         var ranked = enc.Ranked(controller.Settings.ShowMonsters);
         CombatantRow.Sync(rows, ranked, enc);
 
@@ -77,43 +56,10 @@ public partial class DetailsWindow : Window
         UpdateSkills();
     }
 
-    void UpdateFightList()
-    {
-        updatingFights = true;
-        var selectedKey = (EncounterBox.SelectedItem as FightChoice)?.Key ?? LiveKey;
-        var tracker = controller.Tracker;
-
-        var wanted = new List<FightChoice>
-        {
-            new("Current fight (live) - " + tracker.Latest.Title, () => controller.Tracker.Latest, LiveKey),
-            new("Whole session", () => controller.Tracker.Session, SessionKey),
-        };
-        foreach (var enc in tracker.History)
-        {
-            var e = enc;
-            wanted.Add(new FightChoice($"{e.Title}  ({Format.Duration(e.Seconds)})", () => e, e.Number));
-        }
-
-        // Rebuild only when the list changed, so the open dropdown doesn't flicker.
-        if (fights.Count != wanted.Count || fights.Zip(wanted).Any(p => p.First.Key != p.Second.Key))
-        {
-            fights.Clear();
-            foreach (var f in wanted)
-                fights.Add(f);
-        }
-        else
-        {
-            fights[0].Title = wanted[0].Title;
-        }
-
-        EncounterBox.SelectedItem = fights.FirstOrDefault(f => f.Key == selectedKey) ?? fights[0];
-        updatingFights = false;
-    }
-
     void UpdateSkills()
     {
-        if (PlayersGrid.SelectedItem is CombatantRow row && shown != null
-            && shown.Combatants.TryGetValue(row.Key, out var c))
+        if (PlayersGrid.SelectedItem is CombatantRow row
+            && controller.Tracker.Current.Combatants.TryGetValue(row.Key, out var c))
         {
             SkillsTitle.Text = $"{c.DisplayName} - skills";
             SkillsGrid.ItemsSource = SkillRow.From(c);
@@ -125,10 +71,13 @@ public partial class DetailsWindow : Window
         }
     }
 
-    void EncounterBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    void Copy_Click(object sender, RoutedEventArgs e)
     {
-        if (!updatingFights && IsLoaded)
-            Refresh();
+        var copied = Report.Copy(controller.Tracker.Current, rows);
+        CopyButton.Content = copied ? "Copied!" : "Nothing to copy";
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        timer.Tick += (_, _) => { timer.Stop(); CopyButton.Content = "Copy all"; };
+        timer.Start();
     }
 
     void MonstersBox_Click(object sender, RoutedEventArgs e)

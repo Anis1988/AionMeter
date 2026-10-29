@@ -8,9 +8,6 @@ public sealed class TrackerOptions
     public string YourName { get; set; } = "";
     public AionClass YourClass { get; set; } = AionClass.Unknown;
 
-    /// <summary>Seconds without damage before a new fight starts.</summary>
-    public int IdleSeconds { get; set; } = 20;
-
     /// <summary>Count your summons' damage (spirits, servants) as yours.</summary>
     public bool MergeSummons { get; set; } = true;
 }
@@ -19,17 +16,13 @@ public sealed class TrackerOptions
 public sealed class CombatTracker
 {
     public const string UnknownDotName = "Other (DoT)";
-    const int MaxHistory = 30;
 
     // Aion character names are a single word; mobs usually have spaces in theirs.
     static readonly Regex PlayerName = new(@"^[\p{L}\p{Nd}]+$", RegexOptions.Compiled);
     static readonly Regex OwnedPet = new(@"^(?<owner>[\p{L}\p{Nd}]+)'s (?<pet>.+)$", RegexOptions.Compiled);
 
-    readonly List<Encounter> history = [];
     readonly Dictionary<(string Target, string Skill), string> dotOwners = new();
     readonly Dictionary<string, string> lastSkillUser = new(StringComparer.OrdinalIgnoreCase);
-    double archivedSeconds;
-    int fightNumber;
 
     public CombatTracker(TrackerOptions? options = null, ClassDetector? detector = null,
         IEnumerable<KeyValuePair<string, AionClass>>? classOverrides = null)
@@ -39,7 +32,6 @@ public sealed class CombatTracker
         if (classOverrides != null)
             foreach (var (name, cls) in classOverrides)
                 ClassOverrides[name] = cls;
-        Current = new Encounter(++fightNumber);
     }
 
     public TrackerOptions Options { get; }
@@ -48,14 +40,8 @@ public sealed class CombatTracker
     /// <summary>Classes set by hand, by character name.</summary>
     public Dictionary<string, AionClass> ClassOverrides { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public Encounter Current { get; private set; }
-    public Encounter Session { get; private set; } = new(0) { FixedSeconds = 0 };
-
-    /// <summary>Finished fights, newest first.</summary>
-    public IReadOnlyList<Encounter> History => history;
-
-    /// <summary>The fight to show: the running one, or the last finished one while idle.</summary>
-    public Encounter Latest => Current.IsEmpty && history.Count > 0 ? history[0] : Current;
+    /// <summary>Everything since the last reset; it keeps adding up until <see cref="Reset"/>.</summary>
+    public Encounter Current { get; private set; } = new();
 
     /// <summary>Changes whenever the data changes, so the UI can skip redundant redraws.</summary>
     public int Version { get; private set; }
@@ -85,9 +71,8 @@ public sealed class CombatTracker
 
         if (IsYou(e.Target))
         {
-            Advance(e.Time);
+            Current.Advance(e.Time);
             Current.DamageTaken += e.Amount;
-            Session.DamageTaken += e.Amount;
             Version++;
         }
 
@@ -116,17 +101,14 @@ public sealed class CombatTracker
         if (string.Equals(owner, e.Target, StringComparison.OrdinalIgnoreCase))
             return;
 
-        Advance(e.Time);
+        Current.Advance(e.Time);
         var hint = learnable ? Detector.Lookup(skill) : AionClass.Unknown;
-        foreach (var enc in new[] { Current, Session })
-        {
-            var c = GetOrAdd(enc, owner);
-            c.Add(skill ?? "Auto-attack", e.Amount, e.Critical);
-            c.Vote(hint);
-            c.Class = ResolveClass(c);
-            if (!c.IsMonster)
-                enc.AddTargetDamage(e.Target, e.Amount);
-        }
+        var c = GetOrAdd(Current, owner);
+        c.Add(skill ?? "Auto-attack", e.Amount, e.Critical);
+        c.Vote(hint);
+        c.Class = ResolveClass(c);
+        if (!c.IsMonster)
+            Current.AddTargetDamage(e.Target, e.Amount);
 
         if (learnable && !IsMonsterName(owner))
         {
@@ -135,20 +117,15 @@ public sealed class CombatTracker
                 LearnedSomething = true;
         }
 
-        Session.FixedSeconds = archivedSeconds + Current.Seconds;
         Version++;
     }
 
-    /// <summary>Clears all fights.</summary>
+    /// <summary>Clears all damage and starts over.</summary>
     public void Reset()
     {
-        history.Clear();
         dotOwners.Clear();
         lastSkillUser.Clear();
-        archivedSeconds = 0;
-        fightNumber = 0;
-        Current = new Encounter(++fightNumber);
-        Session = new Encounter(0) { FixedSeconds = 0 };
+        Current = new Encounter();
         Version++;
     }
 
@@ -160,26 +137,24 @@ public sealed class CombatTracker
         else
             ClassOverrides[displayName] = cls;
 
-        foreach (var enc in history.Append(Current).Append(Session))
-            foreach (var c in enc.Combatants.Values)
+        foreach (var c in Current.Combatants.Values)
+        {
+            if (string.Equals(c.DisplayName, displayName, StringComparison.OrdinalIgnoreCase))
             {
-                if (string.Equals(c.DisplayName, displayName, StringComparison.OrdinalIgnoreCase))
-                {
-                    c.Class = ResolveClass(c);
-                    if (cls != AionClass.Unknown && !c.IsMonster)
-                        foreach (var skill in c.Skills.Keys)
-                            LearnedSomething |= Detector.Learn(skill, cls);
-                }
+                c.Class = ResolveClass(c);
+                if (cls != AionClass.Unknown && !c.IsMonster)
+                    foreach (var skill in c.Skills.Keys)
+                        LearnedSomething |= Detector.Learn(skill, cls);
             }
+        }
         Version++;
     }
 
-    /// <summary>Re-applies options (name/class) to every fight after settings change.</summary>
+    /// <summary>Re-applies options (name/class) after settings change.</summary>
     public void RefreshClasses()
     {
-        foreach (var enc in history.Append(Current).Append(Session))
-            foreach (var c in enc.Combatants.Values)
-                c.Class = ResolveClass(c);
+        foreach (var c in Current.Combatants.Values)
+            c.Class = ResolveClass(c);
         Version++;
     }
 
@@ -193,30 +168,6 @@ public sealed class CombatTracker
 
     string DisplayNameOf(string name) =>
         name == LogParser.You && Options.YourName.Length > 0 ? Options.YourName : name;
-
-    void Advance(DateTime time)
-    {
-        if (Current.End is { } end
-            && ((time - end).TotalSeconds > Options.IdleSeconds || time < end.AddMinutes(-1)))
-        {
-            if (!Current.IsEmpty)
-            {
-                archivedSeconds += Current.Seconds;
-                history.Insert(0, Current);
-                if (history.Count > MaxHistory)
-                    history.RemoveAt(history.Count - 1);
-            }
-            Current = new Encounter(++fightNumber);
-            dotOwners.Clear();
-        }
-
-        Current.Start ??= time;
-        if (Current.End == null || time > Current.End)
-            Current.End = time;
-        Session.Start ??= time;
-        if (Session.End == null || time > Session.End)
-            Session.End = time;
-    }
 
     Combatant GetOrAdd(Encounter enc, string name)
     {

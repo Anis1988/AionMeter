@@ -58,32 +58,40 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
     }
 }
 
-public sealed class Encounter(int number)
+/// <summary>All damage since the last reset.</summary>
+public sealed class Encounter
 {
-    readonly Dictionary<string, long> targets = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Longer pauses than this don't count as combat time, so DPS doesn't drop while idle.</summary>
+    public const double CombatGapSeconds = 15;
 
-    /// <summary>0 for the whole-session total, otherwise the fight number.</summary>
-    public int Number { get; } = number;
-    public DateTime? Start { get; internal set; }
-    public DateTime? End { get; internal set; }
+    readonly Dictionary<string, long> targets = new(StringComparer.OrdinalIgnoreCase);
+    double activeSeconds;
+
+    public DateTime? Start { get; private set; }
+    public DateTime? End { get; private set; }
     public long DamageTaken { get; internal set; }
     public Dictionary<string, Combatant> Combatants { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Set for the session total: combat time without the idle gaps.</summary>
-    internal double? FixedSeconds { get; set; }
-
-    /// <summary>Fight length in seconds (at least 1 once combat started).</summary>
-    public double Seconds =>
-        FixedSeconds ?? (Start is { } s && End is { } e ? Math.Max(1, (e - s).TotalSeconds) : 0);
+    /// <summary>Time spent in combat, in seconds (at least 1 once combat started).</summary>
+    public double Seconds => Start == null ? 0 : Math.Max(1, activeSeconds);
 
     /// <summary>The target that took the most damage from players.</summary>
     public string? MainTarget => targets.Count == 0 ? null : targets.MaxBy(t => t.Value).Key;
 
-    public string Title => Number == 0
-        ? "Whole session"
-        : MainTarget is { } t ? $"Fight #{Number} - {t}" : $"Fight #{Number}";
-
     public bool IsEmpty => Combatants.Count == 0;
+
+    internal void Advance(DateTime time)
+    {
+        Start ??= time;
+        if (End is { } end)
+        {
+            var gap = (time - end).TotalSeconds;
+            if (gap > 0 && gap <= CombatGapSeconds)
+                activeSeconds += gap;
+        }
+        if (End == null || time > End)
+            End = time;
+    }
 
     /// <summary>Combatants ordered by damage, highest first.</summary>
     public IReadOnlyList<Combatant> Ranked(bool includeMonsters) =>

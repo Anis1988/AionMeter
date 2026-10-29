@@ -19,7 +19,6 @@ public partial class SettingsWindow : Window
         NameBox.Text = settings.CharacterName;
         ClassBox.ItemsSource = Enum.GetValues<AionClass>().Select(c => c == AionClass.Unknown ? "Auto-detect" : c.ToString());
         ClassBox.SelectedIndex = (int)settings.YourClass;
-        IdleBox.Text = settings.IdleSeconds.ToString();
         OpacitySlider.Value = settings.Opacity;
         MonstersBox.IsChecked = settings.ShowMonsters;
         SummonsBox.IsChecked = settings.MergeSummons;
@@ -50,16 +49,9 @@ public partial class SettingsWindow : Window
 
     void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (!int.TryParse(IdleBox.Text, out var idle) || idle < 3 || idle > 600)
-        {
-            MessageBox.Show(this, "Enter a number of seconds between 3 and 600.", "Aion Meter");
-            return;
-        }
-
         settings.GamePath = GamePathBox.Text.Trim();
         settings.CharacterName = NameBox.Text.Trim();
         settings.YourClass = (AionClass)Math.Max(0, ClassBox.SelectedIndex);
-        settings.IdleSeconds = idle;
         settings.Opacity = OpacitySlider.Value;
         settings.ShowMonsters = MonstersBox.IsChecked == true;
         settings.MergeSummons = SummonsBox.IsChecked == true;

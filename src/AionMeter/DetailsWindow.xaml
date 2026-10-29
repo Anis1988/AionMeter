@@ -8,17 +8,15 @@
         <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="320" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Fight:" VerticalAlignment="Center" Margin="0,0,6,0" />
-            <ComboBox x:Name="EncounterBox" Grid.Column="1" DisplayMemberPath="Title"
-                      SelectionChanged="EncounterBox_SelectionChanged" />
-            <CheckBox x:Name="MonstersBox" Grid.Column="2" Content="Show monsters" Margin="12,0,0,0"
+            <Button x:Name="CopyButton" Content="Copy all" Style="{StaticResource DarkButton}"
+                    ToolTip="Copy everyone's damage to the clipboard" Click="Copy_Click" />
+            <CheckBox x:Name="MonstersBox" Grid.Column="1" Content="Show monsters" Margin="12,0,0,0"
                       VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
                       Click="MonstersBox_Click" />
-            <TextBlock x:Name="SummaryText" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center"
+            <TextBlock x:Name="SummaryText" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center"
                        Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
         </Grid>
 

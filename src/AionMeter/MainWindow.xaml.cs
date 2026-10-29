@@ -41,12 +41,12 @@ public partial class MainWindow : Window
 
     void UpdateTexts()
     {
-        var enc = controller.Tracker.Latest;
+        var enc = controller.Tracker.Current;
         var rows = controller.OverlayRows;
         var total = rows.Sum(r => r.Damage);
         var secs = enc.Seconds;
 
-        HeaderInfo.Text = enc.IsEmpty ? "" : $"#{enc.Number}  {Format.Duration(secs)}";
+        HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
         EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Footer.Text = controller.Status.Length > 0
             ? controller.Status
@@ -92,6 +92,20 @@ public partial class MainWindow : Window
     }
 
     void Reset_Click(object sender, RoutedEventArgs e) => controller.Reset();
+
+    void Copy_Click(object sender, RoutedEventArgs e)
+    {
+        if (Report.Copy(controller.Tracker.Current, controller.OverlayRows))
+            Flash("Copied to clipboard");
+    }
+
+    void Flash(string message)
+    {
+        Footer.Text = message;
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        timer.Tick += (_, _) => { timer.Stop(); UpdateTexts(); };
+        timer.Start();
+    }
 
     void Settings_Click(object sender, RoutedEventArgs e)
     {
