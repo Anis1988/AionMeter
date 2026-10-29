@@ -9,21 +9,12 @@ namespace AionMeter;
 public static class Report
 {
     /// <param name="count">How many top players to include; 0 or less means everyone.</param>
-    public static string Build(Encounter enc, IEnumerable<CombatantRow> rows, int count = 0)
+    public static string Build(IEnumerable<CombatantRow> rows, int count = 0)
     {
-        var all = rows.OrderBy(r => r.Rank).ToList();
-        var total = all.Sum(r => r.Damage);
-        var list = count > 0 ? all.Take(count).ToList() : all;
-        var secs = enc.Seconds;
-
+        var list = rows.OrderBy(r => r.Rank);
         var sb = new StringBuilder();
-        sb.Append($"Aion Meter - {Format.Duration(secs)} - Total {Format.Number(total)}");
-        sb.AppendLine($" - DPS {Format.Number(secs > 0 ? total / secs : 0)}");
-        foreach (var r in list)
-        {
-            var cls = r.IsMonster || r.Class == AionClass.Unknown ? "" : $" [{r.Class}]";
-            sb.AppendLine($"{r.Rank}. {r.Name}{cls} {r.DamageText} ({r.DpsText}/s) {r.PercentText}");
-        }
+        foreach (var r in count > 0 ? list.Take(count) : list)
+            sb.AppendLine($"{r.Rank}. {r.Name} {r.DamageText}");
         return sb.ToString().TrimEnd();
     }
 
@@ -32,7 +23,7 @@ public static class Report
     {
         if (enc.IsEmpty)
             return false;
-        var text = Build(enc, rows, count);
+        var text = Build(rows, count);
         // Another app can briefly hold the clipboard open, so retry a few times.
         for (var attempt = 0; attempt < 5; attempt++)
         {
