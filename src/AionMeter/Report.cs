@@ -8,10 +8,12 @@ namespace AionMeter;
 /// <summary>Builds the plain-text damage list that the Copy buttons put on the clipboard.</summary>
 public static class Report
 {
-    public static string Build(Encounter enc, IEnumerable<CombatantRow> rows)
+    /// <param name="count">How many top players to include; 0 or less means everyone.</param>
+    public static string Build(Encounter enc, IEnumerable<CombatantRow> rows, int count = 0)
     {
-        var list = rows.OrderBy(r => r.Rank).ToList();
-        var total = list.Sum(r => r.Damage);
+        var all = rows.OrderBy(r => r.Rank).ToList();
+        var total = all.Sum(r => r.Damage);
+        var list = count > 0 ? all.Take(count).ToList() : all;
         var secs = enc.Seconds;
 
         var sb = new StringBuilder();
@@ -26,11 +28,11 @@ public static class Report
     }
 
     /// <summary>Copies the list; returns false if there was nothing to copy or the clipboard was busy.</summary>
-    public static bool Copy(Encounter enc, IEnumerable<CombatantRow> rows)
+    public static bool Copy(Encounter enc, IEnumerable<CombatantRow> rows, int count = 0)
     {
         if (enc.IsEmpty)
             return false;
-        var text = Build(enc, rows);
+        var text = Build(enc, rows, count);
         // Another app can briefly hold the clipboard open, so retry a few times.
         for (var attempt = 0; attempt < 5; attempt++)
         {

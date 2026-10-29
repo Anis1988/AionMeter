@@ -30,14 +30,16 @@ Close Aion RainMeter while using this, because its "Clear Chat.log on start-up" 
 | Button | Action |
 |---|---|
 | ⏸ | Pause / resume counting |
-| ⧉ | Copy everyone's damage to the clipboard |
+| ⧉ | Copy the top players' damage to the clipboard (top 10 by default, change it in settings; 0 = everyone) |
 | ⟳ | Reset: clear everything and start over |
 | ☰ | Full list (same as clicking the overlay) |
 | ⚙ | Settings |
+| ⌃ | Collapse to just the title bar (click again to expand) |
+| — | Minimize to the taskbar |
 
 - Drag the title bar to move the overlay and the bottom-right corner to resize it.
 - Damage never resets on its own; press ⟳ to start over. Breaks longer than 15 seconds don't count toward DPS time.
-- The full list also has a **Copy all** button.
+- The full list also has a **Copy** button that uses the same setting.
 - In the full list, **right-click a player** to set their class if it wasn't detected. Your choice is remembered.
 
 ## How classes are detected

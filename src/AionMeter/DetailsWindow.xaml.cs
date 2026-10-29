@@ -24,6 +24,7 @@ public partial class DetailsWindow : Window
             view.LiveSortingProperties.Add(p);
 
         MonstersBox.IsChecked = controller.Settings.ShowMonsters;
+        CopyButton.Content = CopyLabel;
 
         controller.Updated += Refresh;
         Closed += (_, _) => controller.Updated -= Refresh;
@@ -73,12 +74,14 @@ public partial class DetailsWindow : Window
 
     void Copy_Click(object sender, RoutedEventArgs e)
     {
-        var copied = Report.Copy(controller.Tracker.Current, rows);
+        var copied = Report.Copy(controller.Tracker.Current, rows, controller.Settings.CopyCount);
         CopyButton.Content = copied ? "Copied!" : "Nothing to copy";
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        timer.Tick += (_, _) => { timer.Stop(); CopyButton.Content = "Copy all"; };
+        timer.Tick += (_, _) => { timer.Stop(); CopyButton.Content = CopyLabel; };
         timer.Start();
     }
+
+    string CopyLabel => controller.Settings.CopyCount > 0 ? $"Copy top {controller.Settings.CopyCount}" : "Copy all";
 
     void MonstersBox_Click(object sender, RoutedEventArgs e)
     {

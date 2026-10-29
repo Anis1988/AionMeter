@@ -95,7 +95,7 @@ public partial class MainWindow : Window
 
     void Copy_Click(object sender, RoutedEventArgs e)
     {
-        if (Report.Copy(controller.Tracker.Current, controller.OverlayRows))
+        if (Report.Copy(controller.Tracker.Current, controller.OverlayRows, controller.Settings.CopyCount))
             Flash("Copied to clipboard");
     }
 
@@ -120,6 +120,34 @@ public partial class MainWindow : Window
 
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
+    void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    double expandedHeight;
+
+    bool Collapsed => Body.Visibility != Visibility.Visible;
+
+    /// <summary>Shrinks the overlay to just its title bar, or restores it.</summary>
+    void Collapse_Click(object sender, RoutedEventArgs e)
+    {
+        if (Collapsed)
+        {
+            Body.Visibility = FooterBar.Visibility = Visibility.Visible;
+            ResizeMode = ResizeMode.CanResizeWithGrip;
+            Height = expandedHeight;
+            CollapseButton.Content = "\uE70E";
+            CollapseButton.ToolTip = "Collapse to title bar";
+        }
+        else
+        {
+            expandedHeight = Height;
+            Body.Visibility = FooterBar.Visibility = Visibility.Collapsed;
+            ResizeMode = ResizeMode.NoResize;
+            Height = 30;
+            CollapseButton.Content = "\uE70D";
+            CollapseButton.ToolTip = "Expand";
+        }
+    }
+
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
         var s = controller.Settings;
@@ -128,7 +156,7 @@ public partial class MainWindow : Window
             s.Left = Left;
             s.Top = Top;
             s.Width = Width;
-            s.Height = Height;
+            s.Height = Collapsed ? expandedHeight : Height;
         }
         controller.SaveLearned();
         base.OnClosing(e);

@@ -33,6 +33,9 @@
             </StackPanel>
         </Grid>
 
+        <TextBlock Text="Players to copy with the Copy button (0 = everyone)" Margin="0,0,0,4" />
+        <TextBox x:Name="CopyCountBox" Width="80" HorizontalAlignment="Left" Padding="3" Margin="0,0,0,12" />
+
         <TextBlock Text="Window opacity" Margin="0,0,0,4" />
         <Slider x:Name="OpacitySlider" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
                 Margin="0,0,0,12" />

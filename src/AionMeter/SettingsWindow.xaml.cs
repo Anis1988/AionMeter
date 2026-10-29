@@ -19,6 +19,7 @@ public partial class SettingsWindow : Window
         NameBox.Text = settings.CharacterName;
         ClassBox.ItemsSource = Enum.GetValues<AionClass>().Select(c => c == AionClass.Unknown ? "Auto-detect" : c.ToString());
         ClassBox.SelectedIndex = (int)settings.YourClass;
+        CopyCountBox.Text = settings.CopyCount.ToString();
         OpacitySlider.Value = settings.Opacity;
         MonstersBox.IsChecked = settings.ShowMonsters;
         SummonsBox.IsChecked = settings.MergeSummons;
@@ -49,9 +50,16 @@ public partial class SettingsWindow : Window
 
     void Save_Click(object sender, RoutedEventArgs e)
     {
+        if (!int.TryParse(CopyCountBox.Text.Trim(), out var copyCount) || copyCount < 0 || copyCount > 100)
+        {
+            MessageBox.Show(this, "Players to copy must be a number from 0 to 100 (0 = everyone).", "Aion Meter");
+            return;
+        }
+
         settings.GamePath = GamePathBox.Text.Trim();
         settings.CharacterName = NameBox.Text.Trim();
         settings.YourClass = (AionClass)Math.Max(0, ClassBox.SelectedIndex);
+        settings.CopyCount = copyCount;
         settings.Opacity = OpacitySlider.Value;
         settings.ShowMonsters = MonstersBox.IsChecked == true;
         settings.MergeSummons = SummonsBox.IsChecked == true;
