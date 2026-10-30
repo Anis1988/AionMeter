@@ -125,4 +125,42 @@ public class CombatTrackerTests
 
         Assert.Equal(400, t.Current.Combatants["Grop"].Damage);
     }
+
+    [Fact]
+    public void TracksHealingSeparatelyFromDamage()
+    {
+        var t = Run(
+            "2026.10.28 17:00:00 : You inflicted 1,000 damage on Mob A.",
+            "2026.10.28 17:00:01 : You recovered 2,000 HP because Lumi used Healing Light.",
+            "2026.10.28 17:00:02 : Grop recovered 500 HP because Lumi used Light of Recovery.",
+            "2026.10.28 17:00:03 : You recovered 300 HP by using Recovery Spell.");
+
+        var healers = t.Current.Ranked(includeMonsters: false, MeterMode.Healing);
+        Assert.Equal(["Lumi", "Batte"], healers.Select(c => c.DisplayName));
+        Assert.Equal(2500, healers[0].Healing);
+        Assert.Equal(AionClass.Cleric, healers[0].Class);
+
+        // Lumi only healed, so she isn't in the damage ranking.
+        Assert.Equal(["Batte"], t.Current.Ranked(includeMonsters: false).Select(c => c.DisplayName));
+    }
+
+    [Fact]
+    public void CreditsHealOverTimeToWhoCastIt()
+    {
+        var t = Run(
+            "2026.10.28 17:00:00 : Grop recovered 1,000 HP because Lumi used Light of Rejuvenation.",
+            "2026.10.28 17:00:01 : Grop recovered 200 HP due to the effect of Light of Rejuvenation.",
+            "2026.10.28 17:00:02 : Grop recovered 50 HP due to the effect of Mystery Regen.");
+
+        Assert.Equal(1200, t.Current.Combatants["Lumi"].Healing);
+        Assert.Equal(50, t.Current.Combatants[CombatTracker.UnknownHotName].Healing);
+    }
+
+    [Fact]
+    public void IgnoresMonsterHeals()
+    {
+        var t = Run("2026.10.28 17:00:00 : Protectorate Hunter recovered 1,000 HP by using Regeneration.");
+
+        Assert.True(t.Current.IsEmpty);
+    }
 }

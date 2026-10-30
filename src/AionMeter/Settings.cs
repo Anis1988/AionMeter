@@ -22,6 +22,7 @@ public sealed class Settings
     public AionClass YourClass { get; set; } = AionClass.Unknown;
     public bool ShowMonsters { get; set; }
     public bool MergeSummons { get; set; } = true;
+    public MeterMode Mode { get; set; } = MeterMode.Damage;
 
     /// <summary>How many top players the Copy button copies; 0 copies everyone.</summary>
     public int CopyCount { get; set; } = 10;

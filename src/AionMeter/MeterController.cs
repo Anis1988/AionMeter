@@ -28,6 +28,19 @@ public sealed class MeterController
     public CombatTracker Tracker { get; }
     public ObservableCollection<CombatantRow> OverlayRows { get; } = [];
     public bool Paused { get; set; }
+
+    /// <summary>Whether the meter ranks by damage or healing.</summary>
+    public MeterMode Mode
+    {
+        get => Settings.Mode;
+        set
+        {
+            if (Settings.Mode == value) return;
+            Settings.Mode = value;
+            Settings.Save();
+            Refresh(force: true);
+        }
+    }
     public string Status { get; private set; } = "";
 
     /// <summary>Raised after new data was processed (or status changed).</summary>
@@ -111,7 +124,7 @@ public sealed class MeterController
             return;
         shownVersion = Tracker.Version;
         shownEncounter = enc;
-        CombatantRow.Sync(OverlayRows, enc.Ranked(Settings.ShowMonsters), enc);
+        CombatantRow.Sync(OverlayRows, enc.Ranked(Settings.ShowMonsters, Mode), enc, Mode);
         Updated?.Invoke();
     }
 }

@@ -1,3 +1,4 @@
+using AionMeter.Core;
 using System.Windows;
 using System.Windows.Input;
 
@@ -43,14 +44,21 @@ public partial class MainWindow : Window
     {
         var enc = controller.Tracker.Current;
         var rows = controller.OverlayRows;
-        var total = rows.Sum(r => r.Damage);
+        var total = rows.Sum(r => r.Value);
         var secs = enc.Seconds;
+        var healing = controller.Mode == MeterMode.Healing;
+        ModeButton.Content = healing ? "HEAL" : "DMG";
+        ModeButton.Foreground = healing ? System.Windows.Media.Brushes.LightGreen : System.Windows.Media.Brushes.Orange;
+        ModeButton.ToolTip = healing ? "Showing healing - click to show damage" : "Showing damage - click to show healing";
+        EmptyText.Text = healing ? "No healing yet..." : "Waiting for combat...";
 
         HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
         EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Footer.Text = controller.Status.Length > 0
             ? controller.Status
-            : $"Total {Format.Number(total)}   DPS {Format.Number(secs > 0 ? total / secs : 0)}   Taken {Format.Number(enc.DamageTaken)}";
+            : healing
+                ? $"Healed {Format.Number(total)}   HPS {Format.Number(secs > 0 ? total / secs : 0)}"
+                : $"Total {Format.Number(total)}   DPS {Format.Number(secs > 0 ? total / secs : 0)}   Taken {Format.Number(enc.DamageTaken)}";
     }
 
     void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -92,6 +100,9 @@ public partial class MainWindow : Window
     }
 
     void Reset_Click(object sender, RoutedEventArgs e) => controller.Reset();
+
+    void Mode_Click(object sender, RoutedEventArgs e) =>
+        controller.Mode = controller.Mode == MeterMode.Damage ? MeterMode.Healing : MeterMode.Damage;
 
     void Copy_Click(object sender, RoutedEventArgs e)
     {

@@ -13,15 +13,15 @@ public static class Report
         // One line, e.g. "1-Batte 456.7k  2-Grop 310.2k  3-Lumi 98.4k"
         var list = rows.OrderBy(r => r.Rank);
         return string.Join("  ", (count > 0 ? list.Take(count) : list)
-            .Select(r => $"{r.Rank}-{r.Name} {r.DamageText}"));
+            .Select(r => $"{r.Rank}-{r.Name} {r.ValueText}"));
     }
 
     /// <summary>Copies the list; returns false if there was nothing to copy or the clipboard was busy.</summary>
     public static bool Copy(Encounter enc, IEnumerable<CombatantRow> rows, int count = 0)
     {
-        if (enc.IsEmpty)
-            return false;
         var text = Build(rows, count);
+        if (enc.IsEmpty || text.Length == 0)
+            return false;
         // Another app can briefly hold the clipboard open, so retry a few times.
         for (var attempt = 0; attempt < 5; attempt++)
         {

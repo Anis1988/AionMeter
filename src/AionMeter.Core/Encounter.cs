@@ -34,7 +34,20 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
     public long MaxHit { get; private set; }
     public Dictionary<string, SkillStats> Skills { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    public long Healing { get; private set; }
+    public int HealHits { get; private set; }
+    public int HealCrits { get; private set; }
+    public long MaxHeal { get; private set; }
+    public Dictionary<string, SkillStats> HealSkills { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     public double CritRate => Hits == 0 ? 0 : (double)Crits / Hits;
+    public double HealCritRate => HealHits == 0 ? 0 : (double)HealCrits / HealHits;
+
+    /// <summary>Total for the given mode: damage done or HP healed.</summary>
+    public long Total(MeterMode mode) => mode == MeterMode.Healing ? Healing : Damage;
+
+    public IReadOnlyDictionary<string, SkillStats> SkillsFor(MeterMode mode) =>
+        mode == MeterMode.Healing ? HealSkills : Skills;
 
     /// <summary>Most-voted class from the skills this combatant used.</summary>
     public AionClass DetectedClass =>
@@ -48,6 +61,17 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
         if (amount > MaxHit) MaxHit = amount;
         if (!Skills.TryGetValue(skill, out var s))
             Skills[skill] = s = new SkillStats(skill);
+        s.Add(amount, critical);
+    }
+
+    internal void AddHeal(string skill, long amount, bool critical)
+    {
+        Healing += amount;
+        HealHits++;
+        if (critical) HealCrits++;
+        if (amount > MaxHeal) MaxHeal = amount;
+        if (!HealSkills.TryGetValue(skill, out var s))
+            HealSkills[skill] = s = new SkillStats(skill);
         s.Add(amount, critical);
     }
 
@@ -93,11 +117,11 @@ public sealed class Encounter
             End = time;
     }
 
-    /// <summary>Combatants ordered by damage, highest first.</summary>
-    public IReadOnlyList<Combatant> Ranked(bool includeMonsters) =>
+    /// <summary>Combatants with damage (or healing) in this mode, highest first.</summary>
+    public IReadOnlyList<Combatant> Ranked(bool includeMonsters, MeterMode mode = MeterMode.Damage) =>
         Combatants.Values
-            .Where(c => includeMonsters || !c.IsMonster)
-            .OrderByDescending(c => c.Damage)
+            .Where(c => (includeMonsters || !c.IsMonster) && c.Total(mode) > 0)
+            .OrderByDescending(c => c.Total(mode))
             .ThenBy(c => c.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToList();
 

@@ -52,12 +52,14 @@ public static class SkillData
         [AionClass.Cleric] =
         [
             "Smite", "Chastise", "Earth's Wrath", "Divine Spark", "Enfeebling Burst",
+            "Healing Light", "Light of Recovery", "Radiant Cure", "Healing Wind", "Light of Rejuvenation",
+            "Flash of Recovery", "Splendor of Recovery",
         ],
         [AionClass.Chanter] =
         [
             "Meteor Strike", "Booming Strike", "Booming Smash", "Booming Assault", "Parrying Strike",
             "Incandescent Blow", "Soul Crush", "Disorienting Blow", "Inescapable Judgment", "Pentacle Shock",
-            "Mountain Crash",
+            "Mountain Crash", "Recovery Spell", "Healing Conduit", "Word of Revival",
         ],
         [AionClass.Gunner] = [],
         [AionClass.Songweaver] = [],

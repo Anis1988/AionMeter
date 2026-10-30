@@ -20,7 +20,8 @@ public partial class DetailsWindow : Window
         PlayersGrid.ItemsSource = rows;
         var view = (ListCollectionView)CollectionViewSource.GetDefaultView(rows);
         view.IsLiveSorting = true;
-        foreach (var p in new[] { "Rank", "Name", "ClassName", "Damage", "Dps", "Percent", "Hits", "CritRate", "MaxHit" })
+        foreach (var p in new[] { "Rank", "Name", "ClassName", "Damage", "Dps", "Percent", "Hits", "CritRate", "MaxHit",
+                     "Healing", "Hps" })
             view.LiveSortingProperties.Add(p);
 
         MonstersBox.IsChecked = controller.Settings.ShowMonsters;
@@ -44,15 +45,20 @@ public partial class DetailsWindow : Window
 
     void Refresh()
     {
+        var mode = controller.Mode;
+        ModeBox.SelectedIndex = (int)mode;
         var enc = controller.Tracker.Current;
-        var ranked = enc.Ranked(controller.Settings.ShowMonsters);
-        CombatantRow.Sync(rows, ranked, enc);
+        var ranked = enc.Ranked(controller.Settings.ShowMonsters, mode);
+        CombatantRow.Sync(rows, ranked, enc, mode);
 
-        var total = ranked.Sum(c => c.Damage);
+        var total = ranked.Sum(c => c.Total(mode));
         var secs = enc.Seconds;
-        SummaryText.Text = enc.IsEmpty
-            ? "No damage yet"
-            : $"{Format.Duration(secs)}   Total {Format.Number(total)}   DPS {Format.Number(secs > 0 ? total / secs : 0)}   Taken {Format.Number(enc.DamageTaken)}";
+        var perSecond = Format.Number(secs > 0 ? total / secs : 0);
+        SummaryText.Text = ranked.Count == 0
+            ? mode == MeterMode.Healing ? "No healing yet" : "No damage yet"
+            : mode == MeterMode.Healing
+                ? $"{Format.Duration(secs)}   Healed {Format.Number(total)}   HPS {perSecond}"
+                : $"{Format.Duration(secs)}   Total {Format.Number(total)}   DPS {perSecond}   Taken {Format.Number(enc.DamageTaken)}";
 
         UpdateSkills();
     }
@@ -62,8 +68,9 @@ public partial class DetailsWindow : Window
         if (PlayersGrid.SelectedItem is CombatantRow row
             && controller.Tracker.Current.Combatants.TryGetValue(row.Key, out var c))
         {
-            SkillsTitle.Text = $"{c.DisplayName} - skills";
-            SkillsGrid.ItemsSource = SkillRow.From(c);
+            var mode = controller.Mode;
+            SkillsTitle.Text = $"{c.DisplayName} - {(mode == MeterMode.Healing ? "heals" : "skills")}";
+            SkillsGrid.ItemsSource = SkillRow.From(c, mode);
         }
         else
         {
@@ -89,6 +96,12 @@ public partial class DetailsWindow : Window
         controller.Settings.Save();
         controller.ApplySettings();
         Refresh();
+    }
+
+    void ModeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (IsLoaded && ModeBox.SelectedIndex >= 0)
+            controller.Mode = (MeterMode)ModeBox.SelectedIndex;
     }
 
     void PlayersGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateSkills();

@@ -49,8 +49,8 @@ public sealed class CombatantRow(string key) : Observable
     string name = "";
     AionClass cls;
     bool isYou, isMonster;
-    long damage, maxHit;
-    double dps, percent, barFraction, critRate;
+    long damage, maxHit, healing, value;
+    double dps, percent, barFraction, critRate, hps, perSecond;
     int hits;
 
     public string Key { get; } = key;
@@ -66,6 +66,12 @@ public sealed class CombatantRow(string key) : Observable
     public int Hits { get => hits; private set => Set(ref hits, value); }
     public double CritRate { get => critRate; private set => Set(ref critRate, value); }
     public long MaxHit { get => maxHit; private set => Set(ref maxHit, value); }
+    public long Healing { get => healing; private set => Set(ref healing, value); }
+    public double Hps { get => hps; private set => Set(ref hps, value); }
+
+    /// <summary>Damage or healing, whichever the meter is showing.</summary>
+    public long Value { get => value; private set => Set(ref this.value, value); }
+    public double PerSecond { get => perSecond; private set => Set(ref perSecond, value); }
 
     public AionClass Class
     {
@@ -91,9 +97,12 @@ public sealed class CombatantRow(string key) : Observable
     public string PercentText => Format.Percent(Percent);
     public string CritText => Format.Percent(CritRate);
     public string MaxHitText => Format.Number(MaxHit);
-    public string Summary => $"{Format.Number(Damage)}  ({Format.Number(Dps)}/s)  {Percent * 100:0}%";
+    public string HealingText => Format.Number(Healing);
+    public string HpsText => Format.Number(Hps);
+    public string ValueText => Format.Number(Value);
+    public string Summary => $"{Format.Number(Value)}  ({Format.Number(PerSecond)}/s)  {Percent * 100:0}%";
 
-    public void Update(Combatant c, int rank, long total, long top, double seconds)
+    public void Update(Combatant c, int rank, long total, long top, double seconds, MeterMode mode)
     {
         Rank = rank;
         Name = c.DisplayName;
@@ -102,21 +111,27 @@ public sealed class CombatantRow(string key) : Observable
         Class = c.Class;
         Damage = c.Damage;
         Dps = seconds > 0 ? c.Damage / seconds : 0;
-        Percent = total > 0 ? (double)c.Damage / total : 0;
-        BarFraction = top > 0 ? (double)c.Damage / top : 0;
+        Healing = c.Healing;
+        Hps = seconds > 0 ? c.Healing / seconds : 0;
+        Value = c.Total(mode);
+        PerSecond = seconds > 0 ? Value / seconds : 0;
+        Percent = total > 0 ? (double)Value / total : 0;
+        BarFraction = top > 0 ? (double)Value / top : 0;
         Hits = c.Hits;
         CritRate = c.CritRate;
         MaxHit = c.MaxHit;
         foreach (var p in new[] { nameof(DamageText), nameof(DpsText), nameof(PercentText), nameof(CritText),
-                     nameof(MaxHitText), nameof(Summary), nameof(YouVisibility), nameof(ClassName) })
+                     nameof(MaxHitText), nameof(HealingText), nameof(HpsText), nameof(ValueText), nameof(Summary),
+                     nameof(YouVisibility), nameof(ClassName) })
             Raise(p);
     }
 
     /// <summary>Updates <paramref name="rows"/> in place so selection and scrolling survive refreshes.</summary>
-    public static void Sync(ObservableCollection<CombatantRow> rows, IReadOnlyList<Combatant> ranked, Encounter enc)
+    public static void Sync(ObservableCollection<CombatantRow> rows, IReadOnlyList<Combatant> ranked, Encounter enc,
+        MeterMode mode)
     {
-        var total = ranked.Sum(c => c.Damage);
-        var top = ranked.Count > 0 ? ranked.Max(c => c.Damage) : 0;
+        var total = ranked.Sum(c => c.Total(mode));
+        var top = ranked.Count > 0 ? ranked.Max(c => c.Total(mode)) : 0;
         for (var i = 0; i < ranked.Count; i++)
         {
             var c = ranked[i];
@@ -128,7 +143,7 @@ public sealed class CombatantRow(string key) : Observable
                 rows.Insert(i, new CombatantRow(c.Name));
             else if (index != i)
                 rows.Move(index, i);
-            rows[i].Update(c, i + 1, total, top, enc.Seconds);
+            rows[i].Update(c, i + 1, total, top, enc.Seconds, mode);
         }
         while (rows.Count > ranked.Count)
             rows.RemoveAt(rows.Count - 1);
@@ -151,14 +166,15 @@ public sealed class SkillRow
     public string MaxHitText => Format.Number(MaxHit);
     public string AverageText => Format.Number(Average);
 
-    public static List<SkillRow> From(Combatant c) =>
-        c.Skills.Values
+    /// <summary>Damage skills, or heal skills in healing mode. <see cref="Damage"/> holds the amount either way.</summary>
+    public static List<SkillRow> From(Combatant c, MeterMode mode) =>
+        c.SkillsFor(mode).Values
             .OrderByDescending(s => s.Damage)
             .Select(s => new SkillRow
             {
                 Name = s.Name,
                 Damage = s.Damage,
-                Percent = c.Damage > 0 ? (double)s.Damage / c.Damage : 0,
+                Percent = c.Total(mode) > 0 ? (double)s.Damage / c.Total(mode) : 0,
                 Hits = s.Hits,
                 CritRate = s.Hits > 0 ? (double)s.Crits / s.Hits : 0,
                 MaxHit = s.MaxHit,

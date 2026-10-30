@@ -11,6 +11,7 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 - Click the overlay to open the full list: damage, DPS, %, hits, crit rate and max hit, with a per-skill breakdown for whoever you select
 - Keeps adding up until you press Reset (idle time doesn't lower your DPS)
 - Copy everyone's damage to the clipboard in one click, ready to paste in Discord or chat
+- Healing meter: switch between damage and healing with one click (heals over time credited to the caster)
 - DoT ticks credited to whoever applied them; your spirits/servants can count as your damage
 - Damage taken, pause and reset
 
@@ -29,6 +30,7 @@ Close Aion RainMeter while using this, because its "Clear Chat.log on start-up" 
 
 | Button | Action |
 |---|---|
+| DMG / HEAL | Switch between ranking by damage and by healing |
 | ⏸ | Pause / resume counting |
 | ⧉ | Copy the top players' damage to the clipboard (top 10 by default, change it in settings; 0 = everyone) |
 | ⟳ | Reset: clear everything and start over |
@@ -57,6 +59,7 @@ after the class (`Spiritmaster.png`, `Sorcerer.png`, …) in the `Icons` folder 
 
 ## Limitations
 
+- Healing is read from lines like `Grop recovered 2,345 HP because Lumi used Healing Light.` If your server words heals differently, they won't show up yet.
 - Only what's in your `Chat.log` can be counted. Players far away, or whose damage your client doesn't log, won't appear.
 - Monsters and players are told apart by name: Aion character names are a single word, monster names usually aren't.
 - English client only.

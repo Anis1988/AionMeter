@@ -16,6 +16,7 @@ public sealed class TrackerOptions
 public sealed class CombatTracker
 {
     public const string UnknownDotName = "Other (DoT)";
+    public const string UnknownHotName = "Other (heal over time)";
 
     // Aion character names are a single word; mobs usually have spaces in theirs.
     static readonly Regex PlayerName = new(@"^[\p{L}\p{Nd}]+$", RegexOptions.Compiled);
@@ -23,6 +24,8 @@ public sealed class CombatTracker
 
     readonly Dictionary<(string Target, string Skill), string> dotOwners = new();
     readonly Dictionary<string, string> lastSkillUser = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<(string Target, string Skill), string> hotOwners = new();
+    readonly Dictionary<string, string> lastHealer = new(StringComparer.OrdinalIgnoreCase);
 
     public CombatTracker(TrackerOptions? options = null, ClassDetector? detector = null,
         IEnumerable<KeyValuePair<string, AionClass>>? classOverrides = null)
@@ -53,6 +56,11 @@ public sealed class CombatTracker
     {
         if (e.Amount <= 0)
             return;
+        if (e.Kind is CombatEventKind.Heal or CombatEventKind.HealOverTime)
+        {
+            ProcessHeal(e);
+            return;
+        }
 
         string? owner = e.Source;
         var skill = e.Skill;
@@ -60,7 +68,7 @@ public sealed class CombatTracker
 
         if (e.Kind == CombatEventKind.DamageOverTime)
         {
-            owner = FindDotOwner(e.Target, skill);
+            owner = FindOwner(dotOwners, lastSkillUser, e.Target, skill);
             learnable = false;
         }
         else if (skill != null)
@@ -120,11 +128,51 @@ public sealed class CombatTracker
         Version++;
     }
 
-    /// <summary>Clears all damage and starts over.</summary>
+    void ProcessHeal(CombatEvent e)
+    {
+        string? healer = e.Source;
+        var skill = e.Skill;
+        var learnable = true;
+
+        if (e.Kind == CombatEventKind.HealOverTime)
+        {
+            healer = FindOwner(hotOwners, lastHealer, e.Target, skill) ?? UnknownHotName;
+            learnable = false;
+        }
+        else if (skill != null)
+        {
+            hotOwners[(e.Target, skill)] = healer;
+            lastHealer[skill] = healer;
+        }
+
+        // Monsters healing themselves aren't interesting.
+        if (IsMonsterName(healer))
+            return;
+
+        Current.Advance(e.Time);
+        var c = GetOrAdd(Current, healer);
+        c.AddHeal(skill ?? "Heal", e.Amount, e.Critical);
+        if (learnable)
+            c.Vote(Detector.Lookup(skill));
+        c.Class = ResolveClass(c);
+
+        if (learnable)
+        {
+            var known = KnownClass(healer);
+            if (known != AionClass.Unknown && Detector.Learn(skill, known))
+                LearnedSomething = true;
+        }
+
+        Version++;
+    }
+
+    /// <summary>Clears all damage and healing and starts over.</summary>
     public void Reset()
     {
         dotOwners.Clear();
         lastSkillUser.Clear();
+        hotOwners.Clear();
+        lastHealer.Clear();
         Current = new Encounter();
         Version++;
     }
@@ -143,7 +191,7 @@ public sealed class CombatTracker
             {
                 c.Class = ResolveClass(c);
                 if (cls != AionClass.Unknown && !c.IsMonster)
-                    foreach (var skill in c.Skills.Keys)
+                    foreach (var skill in c.Skills.Keys.Concat(c.HealSkills.Keys))
                         LearnedSomething |= Detector.Learn(skill, cls);
             }
         }
@@ -159,7 +207,7 @@ public sealed class CombatTracker
     }
 
     public static bool IsMonsterName(string name) =>
-        name != LogParser.You && name != UnknownDotName && !PlayerName.IsMatch(name)
+        name != LogParser.You && name != UnknownDotName && name != UnknownHotName && !PlayerName.IsMatch(name)
         && ClassDetector.SummonClass(name) == AionClass.Unknown;
 
     bool IsYou(string name) =>
@@ -181,13 +229,14 @@ public sealed class CombatTracker
         return c;
     }
 
-    string? FindDotOwner(string target, string? skill)
+    static string? FindOwner(Dictionary<(string, string), string> byTarget,
+        Dictionary<string, string> bySkill, string target, string? skill)
     {
         if (skill == null)
             return null;
-        if (dotOwners.TryGetValue((target, skill), out var owner))
+        if (byTarget.TryGetValue((target, skill), out var owner))
             return owner;
-        return lastSkillUser.GetValueOrDefault(skill);
+        return bySkill.GetValueOrDefault(skill);
     }
 
     static string PetSkill(string pet, string? skill) => skill == null ? pet : $"{pet}: {skill}";

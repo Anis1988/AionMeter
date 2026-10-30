@@ -83,6 +83,52 @@ public class LogParserTests
         Assert.Equal(LogParser.You, e.Target);
     }
 
+    [Fact]
+    public void ParsesHealFromAnotherPlayer()
+    {
+        var e = LogParser.Parse("2026.10.28 17:05:00 : Critical Strike!Grop recovered 2,345 HP because Lumi used Healing Light.");
+
+        Assert.NotNull(e);
+        Assert.Equal(CombatEventKind.Heal, e.Kind);
+        Assert.Equal("Lumi", e.Source);
+        Assert.Equal("Grop", e.Target);
+        Assert.Equal(2345, e.Amount);
+        Assert.True(e.Critical);
+        Assert.Equal("Healing Light", e.Skill);
+    }
+
+    [Fact]
+    public void ParsesSelfHeal()
+    {
+        var e = LogParser.Parse("2026.10.28 17:05:00 : You recovered 1,000 HP by using Recovery Spell.");
+
+        Assert.NotNull(e);
+        Assert.Equal(CombatEventKind.Heal, e.Kind);
+        Assert.Equal(LogParser.You, e.Source);
+        Assert.Equal(LogParser.You, e.Target);
+    }
+
+    [Fact]
+    public void ParsesHealOverTime()
+    {
+        var e = LogParser.Parse("2026.10.28 17:05:00 : Grop recovered 500 HP due to the effect of Light of Rejuvenation.");
+
+        Assert.NotNull(e);
+        Assert.Equal(CombatEventKind.HealOverTime, e.Kind);
+        Assert.Equal("Light of Rejuvenation", e.Skill);
+    }
+
+    [Fact]
+    public void ParsesRestoredHp()
+    {
+        var e = LogParser.Parse("2026.10.28 17:05:00 : You restored 800 HP of Grop by using Healing Wind.");
+
+        Assert.NotNull(e);
+        Assert.Equal(CombatEventKind.Heal, e.Kind);
+        Assert.Equal(LogParser.You, e.Source);
+        Assert.Equal("Grop", e.Target);
+    }
+
     [Theory]
     [InlineData("2026.10.28 17:03:24 : You have gained 825,736 XP from Protectorate Searcher (Energy of Repose 235,924).")]
     [InlineData("2026.10.28 17:02:10 : Critical Strike!Protectorate Hunter's attack speed has decreased because Grop used Dazing Severe Blow.")]
