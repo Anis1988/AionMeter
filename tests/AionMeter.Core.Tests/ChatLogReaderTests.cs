@@ -49,4 +49,21 @@ public sealed class ChatLogReaderTests : IDisposable
         File.WriteAllText(LogPath, "first\n");
         Assert.Equal(["first"], reader.ReadNewLines());
     }
+
+    [Fact]
+    public void ClearEmptiesTheLog()
+    {
+        File.WriteAllText(LogPath, "old line\n");
+        Assert.Equal(9, ChatLogReader.Clear(LogPath));
+        Assert.Equal(0, new FileInfo(LogPath).Length);
+        Assert.Equal(0, ChatLogReader.Clear(Path.Combine(dir, "missing.log")));
+    }
+
+    [Fact]
+    public void SkipsZeroBytesFromAClearedFile()
+    {
+        var reader = new ChatLogReader(LogPath, fromStart: true);
+        File.WriteAllBytes(LogPath, [0, 0, 0, (byte)'h', (byte)'i', (byte)'\n']);
+        Assert.Equal(["hi"], reader.ReadNewLines());
+    }
 }

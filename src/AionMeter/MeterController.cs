@@ -49,6 +49,8 @@ public sealed class MeterController
 
     public void Start()
     {
+        if (Settings.ClearChatLogOnStart)
+            ClearChatLog();
         Tick();
         timer.Start();
     }
@@ -78,6 +80,20 @@ public sealed class MeterController
         Tracker.SetClass(name, cls);
         SaveLearned();
         Refresh(force: true);
+    }
+
+    /// <summary>Empties Chat.log; returns a message for the user.</summary>
+    public string ClearChatLog()
+    {
+        try
+        {
+            var size = ChatLogReader.Clear(Settings.ChatLogPath);
+            return size > 0 ? $"Cleared Chat.log ({size / 1024.0 / 1024.0:0.0} MB)" : "Chat.log is already empty";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return "Couldn't clear Chat.log: " + ex.Message;
+        }
     }
 
     /// <summary>Re-applies the class/monster filters.</summary>

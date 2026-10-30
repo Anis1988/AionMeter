@@ -29,6 +29,8 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 The chat log must be on: `g_chatlog = "1"` in `system.cfg` (AionSysEditor can set it).
 Close Aion RainMeter while using this, because its "Clear Chat.log on start-up" option will wipe the log.
 
+Aion Meter empties `Chat.log` each time it starts (like ARM), so the log never grows big enough to make the game stutter. Start the meter **before** the game for best results. You can turn this off, or clear the log by hand, in settings.
+
 ## Using it
 
 | Button | Action |

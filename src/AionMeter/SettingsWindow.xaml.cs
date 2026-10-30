@@ -10,9 +10,12 @@ public partial class SettingsWindow : Window
 {
     readonly Settings settings;
 
-    public SettingsWindow(Settings settings)
+    readonly MeterController controller;
+
+    public SettingsWindow(MeterController controller)
     {
-        this.settings = settings;
+        this.controller = controller;
+        var settings = this.settings = controller.Settings;
         InitializeComponent();
 
         GamePathBox.Text = settings.GamePath;
@@ -24,6 +27,8 @@ public partial class SettingsWindow : Window
         OpacitySlider.Value = settings.Opacity;
         MonstersBox.IsChecked = settings.ShowMonsters;
         SummonsBox.IsChecked = settings.MergeSummons;
+        ClearLogBox.IsChecked = settings.ClearChatLogOnStart;
+        ShowLogSize();
 
         GamePathBox.TextChanged += (_, _) => CheckPath();
         CheckPath();
@@ -38,6 +43,21 @@ public partial class SettingsWindow : Window
             : game ? "Game folder found, but no Chat.log yet - enable g_chatlog in system.cfg and log in once"
             : "This doesn't look like the Aion folder (no bin32/bin64)";
         PathStatus.Foreground = ok ? Brushes.LightGreen : Brushes.Orange;
+    }
+
+    void ShowLogSize()
+    {
+        var path = Path.Combine(GamePathBox.Text.Trim(), "Chat.log");
+        LogSizeText.Text = File.Exists(path)
+            ? $"Current size: {new FileInfo(path).Length / 1024.0 / 1024.0:0.0} MB"
+            : "";
+    }
+
+    void ClearLog_Click(object sender, RoutedEventArgs e)
+    {
+        var message = controller.ClearChatLog();
+        ShowLogSize();
+        LogSizeText.Text = message;
     }
 
     void Browse_Click(object sender, RoutedEventArgs e)
@@ -72,6 +92,7 @@ public partial class SettingsWindow : Window
         settings.Opacity = OpacitySlider.Value;
         settings.ShowMonsters = MonstersBox.IsChecked == true;
         settings.MergeSummons = SummonsBox.IsChecked == true;
+        settings.ClearChatLogOnStart = ClearLogBox.IsChecked == true;
         DialogResult = true;
     }
 }

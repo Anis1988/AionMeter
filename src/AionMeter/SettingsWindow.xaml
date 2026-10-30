@@ -45,6 +45,14 @@
 
         <CheckBox x:Name="MonstersBox" Content="Show monsters in the list" Foreground="{StaticResource TextBrush}"
                   Margin="0,0,0,6" />
+        <CheckBox x:Name="ClearLogBox" Content="Clear Chat.log when the meter starts (keeps the game from stuttering on a huge log)"
+                  Margin="0,0,0,6" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Clear Chat.log now" Style="{StaticResource DarkButton}" Padding="10,4"
+                    Click="ClearLog_Click" />
+            <TextBlock x:Name="LogSizeText" Margin="10,0,0,0" VerticalAlignment="Center"
+                       Foreground="{StaticResource MutedBrush}" />
+        </StackPanel>
         <CheckBox x:Name="SummonsBox" Content="Count my summons (spirits, servants) as my damage"
                   Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
 

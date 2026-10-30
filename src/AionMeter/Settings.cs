@@ -35,6 +35,9 @@ public sealed class Settings
     /// <summary>Whether the overlay was shrunk to the small cube.</summary>
     public bool CubeMode { get; set; }
     public bool MergeSummons { get; set; } = true;
+
+    /// <summary>Empty Chat.log when the meter starts so it doesn't grow forever (like ARM).</summary>
+    public bool ClearChatLogOnStart { get; set; } = true;
     public MeterMode Mode { get; set; } = MeterMode.Damage;
 
     /// <summary>How many top players the Copy button copies; 0 copies everyone.</summary>

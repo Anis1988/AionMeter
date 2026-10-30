@@ -28,6 +28,21 @@ public sealed class ChatLogReader
     public string Path { get; }
     public bool Exists => File.Exists(Path);
 
+    /// <summary>
+    /// Empties the log so it doesn't grow forever. Best done before the game starts:
+    /// if the game is writing it may pad the file with zero bytes, which the reader skips.
+    /// </summary>
+    /// <returns>The size in bytes that was cleared, or 0 if there was nothing to clear.</returns>
+    public static long Clear(string path)
+    {
+        if (!File.Exists(path))
+            return 0;
+        using var fs = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+        var size = fs.Length;
+        fs.SetLength(0);
+        return size;
+    }
+
     public IReadOnlyList<string> ReadNewLines()
     {
         var lines = new List<string>();
@@ -72,7 +87,8 @@ public sealed class ChatLogReader
         decoder.GetChars(bytes, 0, read, chars, 0);
         pending.Append(chars);
 
-        var text = pending.ToString();
+        // Zero bytes appear if the file was cleared while the game kept writing at its old offset.
+        var text = pending.ToString().Replace("\0", "");
         var start = 0;
         for (var i = 0; i < text.Length; i++)
         {

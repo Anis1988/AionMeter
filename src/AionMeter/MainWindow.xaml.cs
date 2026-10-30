@@ -143,7 +143,7 @@ public partial class MainWindow : Window
 
     void Settings_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new SettingsWindow(controller.Settings) { Owner = this };
+        var dialog = new SettingsWindow(controller) { Owner = this };
         if (dialog.ShowDialog() == true)
         {
             Opacity = Math.Clamp(controller.Settings.Opacity, 0.3, 1);
