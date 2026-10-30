@@ -16,6 +16,9 @@ public enum CombatEventKind
 
     /// <summary>A heal-over-time tick; the log doesn't name the healer.</summary>
     HealOverTime,
+
+    /// <summary>A monster died (you got XP for it). Amount is the XP.</summary>
+    Kill,
 }
 
 /// <summary>What the meter ranks players by.</summary>
@@ -83,10 +86,20 @@ public static class LogParser
         Prefix + @"(?<src>.+?) restored " + Amount + @" HP (?:of|to) (?<tgt>.+?)(?: by using (?<skill>.+?))?\.\s*$",
         Options);
 
+    // "You have gained 825,736 XP from Protectorate Searcher (Energy of Repose 235,924)."
+    static readonly Regex KillRx = new(
+        Prefix + @"You have gained " + Amount + @" XP from (?<tgt>.+?)(?: \(.*\))?\.\s*$",
+        Options);
+
     public static CombatEvent? Parse(string line)
     {
         if (string.IsNullOrEmpty(line))
             return null;
+        if (line.Contains(" XP from ", StringComparison.Ordinal))
+        {
+            var k = KillRx.Match(line);
+            return k.Success ? Create(k, "", CombatEventKind.Kill) : null;
+        }
         if (line.Contains(" HP", StringComparison.Ordinal) && ParseHeal(line) is { } heal)
             return heal;
         if (!line.Contains(" damage", StringComparison.Ordinal))

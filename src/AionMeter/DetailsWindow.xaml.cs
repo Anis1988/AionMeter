@@ -11,6 +11,7 @@ public partial class DetailsWindow : Window
 {
     readonly MeterController controller;
     readonly ObservableCollection<CombatantRow> rows = [];
+    readonly FilterPanel filters;
 
     public DetailsWindow(MeterController controller)
     {
@@ -24,7 +25,7 @@ public partial class DetailsWindow : Window
                      "Healing", "Hps" })
             view.LiveSortingProperties.Add(p);
 
-        MonstersBox.IsChecked = controller.Settings.ShowMonsters;
+        FilterHost.Child = filters = new FilterPanel(controller);
         CopyButton.Content = CopyLabel;
 
         controller.Updated += Refresh;
@@ -48,7 +49,8 @@ public partial class DetailsWindow : Window
         var mode = controller.Mode;
         ModeBox.SelectedIndex = (int)mode;
         var enc = controller.Tracker.Current;
-        var ranked = enc.Ranked(controller.Settings.ShowMonsters, mode);
+        var ranked = controller.Visible(enc);
+        filters.Sync();
         CombatantRow.Sync(rows, ranked, enc, mode);
 
         var total = ranked.Sum(c => c.Total(mode));
@@ -90,14 +92,6 @@ public partial class DetailsWindow : Window
 
     string CopyLabel => controller.Settings.CopyCount > 0 ? $"Copy top {controller.Settings.CopyCount}" : "Copy all";
 
-    void MonstersBox_Click(object sender, RoutedEventArgs e)
-    {
-        controller.Settings.ShowMonsters = MonstersBox.IsChecked == true;
-        controller.Settings.Save();
-        controller.ApplySettings();
-        Refresh();
-    }
-
     void ModeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (IsLoaded && ModeBox.SelectedIndex >= 0)
@@ -109,10 +103,24 @@ public partial class DetailsWindow : Window
     void RowMenu_Opened(object sender, RoutedEventArgs e)
     {
         RowMenu.Items.Clear();
-        if (PlayersGrid.SelectedItem is not CombatantRow row || row.IsMonster)
+        if (PlayersGrid.SelectedItem is not CombatantRow row)
         {
             RowMenu.Items.Add(new MenuItem { Header = "Select a player first", IsEnabled = false });
             return;
+        }
+
+        if (row.IsMonster || row.Class == AionClass.Unknown)
+        {
+            var boss = new MenuItem
+            {
+                Header = row.IsBoss ? "Not a boss" : "Mark as boss",
+                Icon = new Image { Source = ClassIcons.Monster(true), Width = 16, Height = 16 },
+            };
+            boss.Click += (_, _) => controller.SetBoss(row.Key, !row.IsBoss);
+            RowMenu.Items.Add(boss);
+            if (row.IsMonster)
+                return;
+            RowMenu.Items.Add(new Separator());
         }
 
         if (row.IsYou)

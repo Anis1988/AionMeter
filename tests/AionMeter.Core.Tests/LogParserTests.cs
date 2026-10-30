@@ -129,8 +129,17 @@ public class LogParserTests
         Assert.Equal("Grop", e.Target);
     }
 
+    [Fact]
+    public void ParsesKillFromXpLine()
+    {
+        var e = LogParser.Parse("2026.10.28 17:03:24 : You have gained 825,736 XP from Protectorate Searcher (Energy of Repose 235,924).");
+
+        Assert.NotNull(e);
+        Assert.Equal(CombatEventKind.Kill, e.Kind);
+        Assert.Equal("Protectorate Searcher", e.Target);
+    }
+
     [Theory]
-    [InlineData("2026.10.28 17:03:24 : You have gained 825,736 XP from Protectorate Searcher (Energy of Repose 235,924).")]
     [InlineData("2026.10.28 17:02:10 : Critical Strike!Protectorate Hunter's attack speed has decreased because Grop used Dazing Severe Blow.")]
     [InlineData("2026.10.28 17:03:31 : You have earned 520 Kinah.")]
     [InlineData("")]

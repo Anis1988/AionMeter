@@ -3,30 +3,75 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
-        <SolidColorBrush x:Key="WindowBrush" Color="#FF15171C" />
-        <SolidColorBrush x:Key="PanelBrush" Color="#FF1E2128" />
-        <SolidColorBrush x:Key="LineBrush" Color="#33FFFFFF" />
-        <SolidColorBrush x:Key="TextBrush" Color="#FFE6E6E6" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#FF9AA0AA" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#FFE0B04A" />
+        <FontFamily x:Key="UiFont">Bahnschrift, Segoe UI</FontFamily>
+        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
+        <Color x:Key="AccentColor">#00E5FF</Color>
+        <Color x:Key="Accent2Color">#8B5CF6</Color>
+
+        <SolidColorBrush x:Key="WindowBrush" Color="#FF0B0F17" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#FF111827" />
+        <SolidColorBrush x:Key="LineBrush" Color="#2600E5FF" />
+        <SolidColorBrush x:Key="TextBrush" Color="#FFE6EDF7" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#FF8B98AD" />
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+        <SolidColorBrush x:Key="Accent2Brush" Color="{StaticResource Accent2Color}" />
+
+        <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="{StaticResource AccentColor}" Offset="0" />
+            <GradientStop Color="{StaticResource Accent2Color}" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="PanelGradient" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#F00B0F17" Offset="0" />
+            <GradientStop Color="#F0121A2B" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#2600E5FF" Offset="0" />
+            <GradientStop Color="#108B5CF6" Offset="0.6" />
+            <GradientStop Color="#00000000" Offset="1" />
+        </LinearGradientBrush>
+
+        <DropShadowEffect x:Key="Glow" Color="{StaticResource AccentColor}" BlurRadius="10" ShadowDepth="0"
+                          Opacity="0.85" />
+        <DropShadowEffect x:Key="TextShadow" Color="Black" BlurRadius="4" ShadowDepth="0" Opacity="0.9" />
+
+        <!-- Small square icon button with a neon hover -->
         <Style x:Key="IconButton" TargetType="Button">
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="Width" Value="24" />
-            <Setter Property="Foreground" Value="#C8FFFFFF" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="Foreground" Value="#FFB8C7DD" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform />
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" Background="{TemplateBinding Background}">
+                        <Border x:Name="Bg" CornerRadius="6" Background="#12FFFFFF" BorderBrush="#1FFFFFFF"
+                                BorderThickness="1">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#33FFFFFF" />
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Bg" Property="Background" Value="#2600E5FF" />
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Bg" Property="Effect" Value="{StaticResource Glow}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9" />
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -34,22 +79,25 @@
             </Setter>
         </Style>
 
-        <Style x:Key="DarkButton" TargetType="Button">
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#FF2B2F38" />
-            <Setter Property="Padding" Value="14,5" />
+        <!-- Pill used for the DMG / HEAL switch -->
+        <Style x:Key="ChipButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Padding" Value="9,0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="3"
-                                BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                        <Border x:Name="Bg" CornerRadius="9" Background="#1AFFFFFF"
+                                BorderBrush="{TemplateBinding Foreground}" BorderThickness="1"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#FF3A3F4A" />
+                                <Setter TargetName="Bg" Property="Background" Value="#33FFFFFF" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -57,13 +105,82 @@
             </Setter>
         </Style>
 
-        <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <!-- Regular text button -->
+        <Style x:Key="DarkButton" TargetType="Button">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="RowBackground" Value="{StaticResource PanelBrush}" />
-            <Setter Property="AlternatingRowBackground" Value="#FF23262E" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" CornerRadius="7" Background="#1A00E5FF"
+                                BorderBrush="{StaticResource AccentGradient}" BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#3300E5FF" />
+                                <Setter TargetName="Bg" Property="Effect" Value="{StaticResource Glow}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#5500E5FF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Class/monster filter toggle: lit when shown, dim when hidden -->
+        <Style x:Key="FilterToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bg" CornerRadius="8" Background="#10FFFFFF" BorderBrush="#1FFFFFFF"
+                                BorderThickness="1" Padding="3" Opacity="0.35">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Opacity" Value="1" />
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="#8000E5FF" />
+                                <Setter TargetName="Bg" Property="Background" Value="#1800E5FF" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Effect" Value="{StaticResource Glow}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="#F0111827" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="#6600E5FF" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FF0E1420" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="RowBackground" Value="#FF0E1420" />
+            <Setter Property="AlternatingRowBackground" Value="#FF111A2A" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#14FFFFFF" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#0FFFFFFF" />
             <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="AutoGenerateColumns" Value="False" />
@@ -71,13 +188,15 @@
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserResizeRows" Value="False" />
             <Setter Property="SelectionMode" Value="Single" />
-            <Setter Property="RowHeight" Value="26" />
+            <Setter Property="RowHeight" Value="30" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#FF2B2F38" />
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
-            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Background" Value="#FF141D2E" />
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="6,6" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="BorderThickness" Value="0,0,1,1" />
         </Style>
@@ -85,7 +204,6 @@
         <Style TargetType="DataGridCell">
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="6,0" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
@@ -97,7 +215,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#FF3A4458" />
+                    <Setter Property="Background" Value="#3300E5FF" />
                     <Setter Property="Foreground" Value="White" />
                 </Trigger>
             </Style.Triggers>

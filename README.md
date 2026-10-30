@@ -14,6 +14,9 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 - Healing meter: switch between damage and healing with one click (heals over time credited to the caster)
 - DoT ticks credited to whoever applied them; your spirits/servants can count as your damage
 - Damage taken, pause and reset
+- Filter by class, monsters and bosses
+- Bosses are detected automatically and shown in red with **BOSS** in front of the name
+- Shrink the whole meter into a tiny cube and click it to bring it back
 
 ## Install
 
@@ -36,8 +39,9 @@ Close Aion RainMeter while using this, because its "Clear Chat.log on start-up" 
 | ⟳ | Reset: clear everything and start over |
 | ☰ | Full list (same as clicking the overlay) |
 | ⚙ | Settings |
+| Filter | Show or hide each class, monsters and bosses |
 | ⌃ | Collapse to just the title bar (click again to expand) |
-| — | Minimize to the taskbar |
+| Cube | Shrink everything into a tiny cube; click the cube to restore it, drag it to move it |
 
 - Drag the title bar to move the overlay and the bottom-right corner to resize it.
 - Damage never resets on its own; press ⟳ to start over. Breaks longer than 15 seconds don't count toward DPS time.
@@ -52,10 +56,17 @@ you set by hand is saved, so detection improves the more you play.
 
 Players who only auto-attack show a grey `?` icon until they use a known skill.
 
+## Bosses
+
+A monster that takes more than 1,500,000 damage in one life (between kills) is treated as a boss:
+its bar turns red and its name gets **BOSS** in front. Change the amount in settings, or right-click
+a monster in the full list and choose **Mark as boss** (remembered between sessions).
+
 ## Custom icons
 
-The overlay draws its own coloured class badges. To use other icons, put PNG files named
-after the class (`Spiritmaster.png`, `Sorcerer.png`, …) in the `Icons` folder next to `AionMeter.exe`.
+The meter draws its own vector class emblems. To use other icons (for example the in-game ones),
+put PNG files named after the class (`Spiritmaster.png`, `Sorcerer.png`, …, plus `Monster.png` and
+`Boss.png`) in the `Icons` folder next to `AionMeter.exe`.
 
 ## Limitations
 

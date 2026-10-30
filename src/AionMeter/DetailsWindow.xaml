@@ -3,14 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Aion Meter - All players" Width="940" Height="580" MinWidth="520" MinHeight="360"
         Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
-        FontFamily="Segoe UI" FontSize="12" WindowStartupLocation="CenterOwner">
+        FontFamily="{StaticResource UiFont}" FontSize="12" WindowStartupLocation="CenterOwner">
     <DockPanel Margin="10">
         <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <ComboBox x:Name="ModeBox" Width="100" Margin="0,0,12,0" SelectionChanged="ModeBox_SelectionChanged">
                 <ComboBoxItem Content="Damage" />
@@ -18,15 +22,13 @@
             </ComboBox>
             <Button x:Name="CopyButton" Grid.Column="1" Content="Copy all" Style="{StaticResource DarkButton}"
                     ToolTip="Copy everyone's damage to the clipboard" Click="Copy_Click" />
-            <CheckBox x:Name="MonstersBox" Grid.Column="2" Content="Show monsters" Margin="12,0,0,0"
-                      VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
-                      Click="MonstersBox_Click" />
-            <TextBlock x:Name="SummaryText" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center"
+            <Border x:Name="FilterHost" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" />
+            <TextBlock x:Name="SummaryText" Grid.Row="1" Grid.ColumnSpan="4" Margin="0,8,0,0" VerticalAlignment="Center"
                        Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
         </Grid>
 
-        <TextBlock DockPanel.Dock="Bottom" Margin="0,6,0,0" Foreground="{StaticResource MutedBrush}"
-                   Text="Tip: right-click a player to set their class. Click a column header to sort." />
+        <TextBlock DockPanel.Dock="Bottom" FontFamily="{StaticResource UiFont}" Margin="0,6,0,0" Foreground="{StaticResource MutedBrush}"
+                   Text="Tip: right-click a player to set their class, or a monster to mark it as a boss. Click a column header to sort." />
 
         <Grid>
             <Grid.RowDefinitions>
@@ -41,11 +43,19 @@
                     <DataGridTemplateColumn Header="" Width="30" CanUserSort="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Image Source="{Binding Icon}" Width="20" Height="20" />
+                                <Image Source="{Binding Icon}" Width="22" Height="22"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding NameBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="Class" Binding="{Binding ClassName}" Width="100" />
                     <DataGridTextColumn Header="Damage" Binding="{Binding DamageText}" SortMemberPath="Damage"
                                         Width="90" ElementStyle="{StaticResource RightCell}" />

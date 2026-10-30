@@ -48,7 +48,7 @@ public sealed class CombatantRow(string key) : Observable
     int rank;
     string name = "";
     AionClass cls;
-    bool isYou, isMonster;
+    bool isYou, isMonster, isBoss;
     long damage, maxHit, healing, value;
     double dps, percent, barFraction, critRate, hps, perSecond;
     int hits;
@@ -59,6 +59,7 @@ public sealed class CombatantRow(string key) : Observable
     public string Name { get => name; private set => Set(ref name, value); }
     public bool IsYou { get => isYou; private set => Set(ref isYou, value); }
     public bool IsMonster { get => isMonster; private set => Set(ref isMonster, value); }
+    public bool IsBoss { get => isBoss; private set => Set(ref isBoss, value); }
     public long Damage { get => damage; private set => Set(ref damage, value); }
     public double Dps { get => dps; private set => Set(ref dps, value); }
     public double Percent { get => percent; private set => Set(ref percent, value); }
@@ -87,9 +88,12 @@ public sealed class CombatantRow(string key) : Observable
         }
     }
 
-    public string ClassName => IsMonster ? "Monster" : cls == AionClass.Unknown ? "?" : cls.ToString();
-    public ImageSource Icon => ClassIcons.Get(cls);
-    public Brush ClassBrush => ClassIcons.Brush(cls);
+    public string ClassName => IsBoss ? "Boss" : IsMonster ? "Monster" : cls == AionClass.Unknown ? "?" : cls.ToString();
+    public ImageSource Icon => IsMonster ? ClassIcons.Monster(IsBoss) : ClassIcons.Get(cls);
+
+    /// <summary>Gradient fill for the meter bar.</summary>
+    public Brush ClassBrush => ClassIcons.BarBrush(cls, IsBoss, IsMonster);
+    public Brush NameBrush => IsBoss ? ClassIcons.BossBrush : System.Windows.Media.Brushes.White;
     public Visibility YouVisibility => IsYou ? Visibility.Visible : Visibility.Collapsed;
 
     public string DamageText => Format.Number(Damage);
@@ -100,12 +104,15 @@ public sealed class CombatantRow(string key) : Observable
     public string HealingText => Format.Number(Healing);
     public string HpsText => Format.Number(Hps);
     public string ValueText => Format.Number(Value);
+    public string PerSecondText => Format.Number(PerSecond) + "/s";
+    public string PercentShort => $"{Percent * 100:0}%";
     public string Summary => $"{Format.Number(Value)}  ({Format.Number(PerSecond)}/s)  {Percent * 100:0}%";
 
     public void Update(Combatant c, int rank, long total, long top, double seconds, MeterMode mode)
     {
         Rank = rank;
-        Name = c.DisplayName;
+        IsBoss = c.IsBoss;
+        Name = c.IsBoss ? "BOSS " + c.DisplayName : c.DisplayName;
         IsYou = c.IsYou;
         IsMonster = c.IsMonster;
         Class = c.Class;
@@ -122,7 +129,8 @@ public sealed class CombatantRow(string key) : Observable
         MaxHit = c.MaxHit;
         foreach (var p in new[] { nameof(DamageText), nameof(DpsText), nameof(PercentText), nameof(CritText),
                      nameof(MaxHitText), nameof(HealingText), nameof(HpsText), nameof(ValueText), nameof(Summary),
-                     nameof(YouVisibility), nameof(ClassName) })
+                     nameof(YouVisibility), nameof(ClassName), nameof(Icon), nameof(ClassBrush), nameof(NameBrush),
+                     nameof(PerSecondText), nameof(PercentShort) })
             Raise(p);
     }
 

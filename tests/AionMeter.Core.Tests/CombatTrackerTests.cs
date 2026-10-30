@@ -163,4 +163,39 @@ public class CombatTrackerTests
 
         Assert.True(t.Current.IsEmpty);
     }
+
+    [Fact]
+    public void DetectsBossFromDamageTakenInOneLife()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", BossDamageThreshold = 10_000 },
+            "2026.10.28 17:00:00 : Bakarma Guardian inflicted 500 damage on you.",
+            "2026.10.28 17:00:01 : You inflicted 6,000 damage on Bakarma Guardian.",
+            "2026.10.28 17:00:02 : You inflicted 6,000 damage on Bakarma Guardian.");
+
+        Assert.True(t.Current.Combatants["Bakarma Guardian"].IsBoss);
+    }
+
+    [Fact]
+    public void KillsResetBossDamage()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", BossDamageThreshold = 10_000 },
+            "2026.10.28 17:00:00 : Protectorate Hunter inflicted 500 damage on you.",
+            "2026.10.28 17:00:01 : You inflicted 6,000 damage on Protectorate Hunter.",
+            "2026.10.28 17:00:02 : You have gained 1,000 XP from Protectorate Hunter.",
+            "2026.10.28 17:00:03 : You inflicted 6,000 damage on Protectorate Hunter.");
+
+        Assert.False(t.Current.Combatants["Protectorate Hunter"].IsBoss);
+    }
+
+    [Fact]
+    public void MarkedBossIsTreatedAsMonster()
+    {
+        var t = Run("2026.10.28 17:00:00 : Kromede inflicted 500 damage on you.");
+        Assert.False(t.Current.Combatants["Kromede"].IsMonster);
+
+        t.SetBoss("Kromede", true);
+        var kromede = t.Current.Combatants["Kromede"];
+        Assert.True(kromede.IsBoss);
+        Assert.True(kromede.IsMonster);
+    }
 }

@@ -20,6 +20,7 @@ public partial class SettingsWindow : Window
         ClassBox.ItemsSource = Enum.GetValues<AionClass>().Select(c => c == AionClass.Unknown ? "Auto-detect" : c.ToString());
         ClassBox.SelectedIndex = (int)settings.YourClass;
         CopyCountBox.Text = settings.CopyCount.ToString();
+        BossBox.Text = settings.BossDamageThreshold.ToString("N0");
         OpacitySlider.Value = settings.Opacity;
         MonstersBox.IsChecked = settings.ShowMonsters;
         SummonsBox.IsChecked = settings.MergeSummons;
@@ -56,6 +57,14 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        var bossText = new string(BossBox.Text.Where(char.IsAsciiDigit).ToArray());
+        if (!long.TryParse(bossText, out var bossThreshold) || bossThreshold < 10_000)
+        {
+            MessageBox.Show(this, "Boss detection must be a number of at least 10,000.", "Aion Meter");
+            return;
+        }
+
+        settings.BossDamageThreshold = bossThreshold;
         settings.GamePath = GamePathBox.Text.Trim();
         settings.CharacterName = NameBox.Text.Trim();
         settings.YourClass = (AionClass)Math.Max(0, ClassBox.SelectedIndex);

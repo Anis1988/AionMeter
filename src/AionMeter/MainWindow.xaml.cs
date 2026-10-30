@@ -1,23 +1,37 @@
-using AionMeter.Core;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using AionMeter.Core;
 
 namespace AionMeter;
 
 public partial class MainWindow : Window
 {
+    const double CubeSize = 68;     // cube plus its glow margin
+    const double CollapsedHeight = 44;
+
     readonly MeterController controller;
+    readonly FilterPanel filters;
     DetailsWindow? details;
+    double expandedWidth, expandedHeight;
 
     public MainWindow(MeterController controller)
     {
         this.controller = controller;
         InitializeComponent();
+        LogoImage.Source = CubeLogo.Source = ClassIcons.Logo;
         Bars.ItemsSource = controller.OverlayRows;
+        filters = new FilterPanel(controller);
+        FilterHost.Child = filters;
         controller.Updated += UpdateTexts;
         RestorePlacement();
         UpdateTexts();
+        if (controller.Settings.CubeMode)
+            Loaded += (_, _) => EnterCube();
     }
+
+    bool Collapsed => Body.Visibility != Visibility.Visible;
+    bool InCube => Cube.Visibility == Visibility.Visible;
 
     void RestorePlacement()
     {
@@ -46,19 +60,22 @@ public partial class MainWindow : Window
         var rows = controller.OverlayRows;
         var total = rows.Sum(r => r.Value);
         var secs = enc.Seconds;
+        var perSecond = secs > 0 ? total / secs : 0;
         var healing = controller.Mode == MeterMode.Healing;
+
         ModeButton.Content = healing ? "HEAL" : "DMG";
-        ModeButton.Foreground = healing ? System.Windows.Media.Brushes.LightGreen : System.Windows.Media.Brushes.Orange;
+        ModeButton.Foreground = healing ? Brushes.SpringGreen : Brushes.Orange;
         ModeButton.ToolTip = healing ? "Showing healing - click to show damage" : "Showing damage - click to show healing";
         EmptyText.Text = healing ? "No healing yet..." : "Waiting for combat...";
-
-        HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
         EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
+        CubeText.Text = enc.IsEmpty ? "" : Format.Number(perSecond);
+
         Footer.Text = controller.Status.Length > 0
             ? controller.Status
             : healing
-                ? $"Healed {Format.Number(total)}   HPS {Format.Number(secs > 0 ? total / secs : 0)}"
-                : $"Total {Format.Number(total)}   DPS {Format.Number(secs > 0 ? total / secs : 0)}   Taken {Format.Number(enc.DamageTaken)}";
+                ? $"Healed {Format.Number(total)}  ·  HPS {Format.Number(perSecond)}"
+                : $"Total {Format.Number(total)}  ·  DPS {Format.Number(perSecond)}  ·  Taken {Format.Number(enc.DamageTaken)}";
     }
 
     void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -90,6 +107,12 @@ public partial class MainWindow : Window
                 details.WindowState = WindowState.Normal;
             details.Activate();
         }
+    }
+
+    void Filter_Click(object sender, RoutedEventArgs e)
+    {
+        filters.Sync();
+        FilterPopup.IsOpen = !FilterPopup.IsOpen;
     }
 
     void Pause_Click(object sender, RoutedEventArgs e)
@@ -131,12 +154,6 @@ public partial class MainWindow : Window
 
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-
-    double expandedHeight;
-
-    bool Collapsed => Body.Visibility != Visibility.Visible;
-
     /// <summary>Shrinks the overlay to just its title bar, or restores it.</summary>
     void Collapse_Click(object sender, RoutedEventArgs e)
     {
@@ -145,7 +162,7 @@ public partial class MainWindow : Window
             Body.Visibility = FooterBar.Visibility = Visibility.Visible;
             ResizeMode = ResizeMode.CanResizeWithGrip;
             Height = expandedHeight;
-            CollapseButton.Content = "\uE70E";
+            CollapseButton.Content = "";
             CollapseButton.ToolTip = "Collapse to title bar";
         }
         else
@@ -153,10 +170,50 @@ public partial class MainWindow : Window
             expandedHeight = Height;
             Body.Visibility = FooterBar.Visibility = Visibility.Collapsed;
             ResizeMode = ResizeMode.NoResize;
-            Height = 30;
-            CollapseButton.Content = "\uE70D";
+            Height = CollapsedHeight;
+            CollapseButton.Content = "";
             CollapseButton.ToolTip = "Expand";
         }
+    }
+
+    void Cube_Click(object sender, RoutedEventArgs e) => EnterCube();
+
+    /// <summary>Hides everything behind a small cube; clicking it brings the meter back.</summary>
+    void EnterCube()
+    {
+        if (InCube)
+            return;
+        FilterPopup.IsOpen = false;
+        if (!Collapsed)
+            expandedHeight = Height;
+        expandedWidth = Width;
+        Panel.Visibility = Visibility.Collapsed;
+        Cube.Visibility = Visibility.Visible;
+        ResizeMode = ResizeMode.NoResize;
+        MinWidth = MinHeight = CubeSize;
+        Width = Height = CubeSize;
+        controller.Settings.CubeMode = true;
+    }
+
+    void ExitCube()
+    {
+        Cube.Visibility = Visibility.Collapsed;
+        Panel.Visibility = Visibility.Visible;
+        MinWidth = 320;
+        MinHeight = CollapsedHeight;
+        Width = Math.Max(MinWidth, expandedWidth);
+        Height = Collapsed ? CollapsedHeight : Math.Max(120, expandedHeight);
+        ResizeMode = Collapsed ? ResizeMode.NoResize : ResizeMode.CanResizeWithGrip;
+        controller.Settings.CubeMode = false;
+    }
+
+    void Cube_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var (left, top) = (Left, Top);
+        DragMove();
+        // A click without moving restores the meter; a drag just moves the cube.
+        if (Math.Abs(Left - left) < 3 && Math.Abs(Top - top) < 3)
+            ExitCube();
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
@@ -166,8 +223,8 @@ public partial class MainWindow : Window
         {
             s.Left = Left;
             s.Top = Top;
-            s.Width = Width;
-            s.Height = Collapsed ? expandedHeight : Height;
+            s.Width = InCube ? expandedWidth : Width;
+            s.Height = InCube || Collapsed ? expandedHeight : Height;
         }
         controller.SaveLearned();
         base.OnClosing(e);

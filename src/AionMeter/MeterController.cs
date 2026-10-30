@@ -20,6 +20,7 @@ public sealed class MeterController
             new TrackerOptions(),
             new ClassDetector(settings.LearnedSkills),
             settings.ClassOverrides);
+        Tracker.KnownBosses.UnionWith(settings.KnownBosses);
         ApplySettings();
         timer.Tick += (_, _) => Tick();
     }
@@ -59,6 +60,7 @@ public sealed class MeterController
         o.YourName = Settings.CharacterName.Trim();
         o.YourClass = Settings.YourClass;
         o.MergeSummons = Settings.MergeSummons;
+        o.BossDamageThreshold = Math.Max(10_000, Settings.BossDamageThreshold);
         if (reader == null || !string.Equals(reader.Path, Settings.ChatLogPath, StringComparison.OrdinalIgnoreCase))
             reader = new ChatLogReader(Settings.ChatLogPath);
         Tracker.RefreshClasses();
@@ -77,6 +79,31 @@ public sealed class MeterController
         SaveLearned();
         Refresh(force: true);
     }
+
+    /// <summary>Re-applies the class/monster filters.</summary>
+    public void ApplyFilters()
+    {
+        Settings.Save();
+        Refresh(force: true);
+    }
+
+    public void SetBoss(string name, bool isBoss)
+    {
+        Tracker.SetBoss(name, isBoss);
+        Settings.KnownBosses = new(Tracker.KnownBosses, StringComparer.OrdinalIgnoreCase);
+        Settings.Save();
+        Refresh(force: true);
+    }
+
+    /// <summary>Whether a combatant passes the class/monster/boss filters.</summary>
+    public bool IsVisible(Combatant c) =>
+        c.IsBoss ? Settings.ShowBosses
+        : c.IsMonster ? Settings.ShowMonsters
+        : !Settings.HiddenClasses.Contains(c.Class);
+
+    /// <summary>Filtered ranking for the current mode.</summary>
+    public IReadOnlyList<Combatant> Visible(Encounter enc) =>
+        enc.Ranked(includeMonsters: true, Mode).Where(IsVisible).ToList();
 
     public void SaveLearned()
     {
@@ -124,7 +151,7 @@ public sealed class MeterController
             return;
         shownVersion = Tracker.Version;
         shownEncounter = enc;
-        CombatantRow.Sync(OverlayRows, enc.Ranked(Settings.ShowMonsters, Mode), enc, Mode);
+        CombatantRow.Sync(OverlayRows, Visible(enc), enc, Mode);
         Updated?.Invoke();
     }
 }

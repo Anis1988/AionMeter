@@ -41,17 +41,17 @@ public static class AionClassInfo
     /// <summary>Bar/icon colour as #RRGGBB.</summary>
     public static string Color(AionClass c) => c switch
     {
-        AionClass.Gladiator => "#C0392B",
-        AionClass.Templar => "#D4AC2B",
-        AionClass.Assassin => "#A0306A",
-        AionClass.Ranger => "#3FA34D",
-        AionClass.Sorcerer => "#2F7FE0",
-        AionClass.Spiritmaster => "#8E5CE8",
-        AionClass.Cleric => "#C9C2A0",
-        AionClass.Chanter => "#1FA595",
-        AionClass.Gunner => "#E07B24",
-        AionClass.Songweaver => "#E05FA8",
-        AionClass.Aethertech => "#6F8496",
-        _ => "#5A6270",
+        AionClass.Gladiator => "#22C55E",
+        AionClass.Templar => "#3B82F6",
+        AionClass.Assassin => "#A855F7",
+        AionClass.Ranger => "#14B8A6",
+        AionClass.Sorcerer => "#F97316",
+        AionClass.Spiritmaster => "#6366F1",
+        AionClass.Cleric => "#F5E6B8",
+        AionClass.Chanter => "#EAB308",
+        AionClass.Gunner => "#EF4444",
+        AionClass.Songweaver => "#EC4899",
+        AionClass.Aethertech => "#94A3B8",
+        _ => "#64748B",
     };
 }

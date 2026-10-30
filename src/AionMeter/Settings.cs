@@ -21,6 +21,19 @@ public sealed class Settings
     public string CharacterName { get; set; } = "";
     public AionClass YourClass { get; set; } = AionClass.Unknown;
     public bool ShowMonsters { get; set; }
+    public bool ShowBosses { get; set; } = true;
+
+    /// <summary>Classes hidden by the filter.</summary>
+    public HashSet<AionClass> HiddenClasses { get; set; } = [];
+
+    /// <summary>A monster that takes this much damage in one life is shown as a boss.</summary>
+    public long BossDamageThreshold { get; set; } = 1_500_000;
+
+    /// <summary>Monsters marked as bosses by hand.</summary>
+    public HashSet<string> KnownBosses { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Whether the overlay was shrunk to the small cube.</summary>
+    public bool CubeMode { get; set; }
     public bool MergeSummons { get; set; } = true;
     public MeterMode Mode { get; set; } = MeterMode.Damage;
 

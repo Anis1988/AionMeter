@@ -25,7 +25,10 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
     public string Name { get; } = name;
     public string DisplayName { get; } = displayName;
     public bool IsYou { get; } = isYou;
-    public bool IsMonster { get; } = isMonster;
+    public bool IsMonster { get; internal set; } = isMonster;
+
+    /// <summary>A monster that took boss-level damage, or one you marked as a boss.</summary>
+    public bool IsBoss { get; internal set; }
     public AionClass Class { get; internal set; }
 
     public long Damage { get; private set; }

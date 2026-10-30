@@ -10,6 +10,9 @@ public sealed class TrackerOptions
 
     /// <summary>Count your summons' damage (spirits, servants) as yours.</summary>
     public bool MergeSummons { get; set; } = true;
+
+    /// <summary>A monster that takes this much damage in one life counts as a boss.</summary>
+    public long BossDamageThreshold { get; set; } = 1_500_000;
 }
 
 /// <summary>Turns combat events into per-fight damage tables.</summary>
@@ -26,6 +29,8 @@ public sealed class CombatTracker
     readonly Dictionary<string, string> lastSkillUser = new(StringComparer.OrdinalIgnoreCase);
     readonly Dictionary<(string Target, string Skill), string> hotOwners = new();
     readonly Dictionary<string, string> lastHealer = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<string, long> damageThisLife = new(StringComparer.OrdinalIgnoreCase);
+    readonly HashSet<string> detectedBosses = new(StringComparer.OrdinalIgnoreCase);
 
     public CombatTracker(TrackerOptions? options = null, ClassDetector? detector = null,
         IEnumerable<KeyValuePair<string, AionClass>>? classOverrides = null)
@@ -43,6 +48,11 @@ public sealed class CombatTracker
     /// <summary>Classes set by hand, by character name.</summary>
     public Dictionary<string, AionClass> ClassOverrides { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Monsters marked as bosses by hand (saved between runs).</summary>
+    public HashSet<string> KnownBosses { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool IsBoss(string name) => KnownBosses.Contains(name) || detectedBosses.Contains(name);
+
     /// <summary>Everything since the last reset; it keeps adding up until <see cref="Reset"/>.</summary>
     public Encounter Current { get; private set; } = new();
 
@@ -54,6 +64,12 @@ public sealed class CombatTracker
 
     public void Process(CombatEvent e)
     {
+        if (e.Kind == CombatEventKind.Kill)
+        {
+            // It died, so the next one with this name starts from zero.
+            damageThisLife.Remove(e.Target);
+            return;
+        }
         if (e.Amount <= 0)
             return;
         if (e.Kind is CombatEventKind.Heal or CombatEventKind.HealOverTime)
@@ -116,7 +132,10 @@ public sealed class CombatTracker
         c.Vote(hint);
         c.Class = ResolveClass(c);
         if (!c.IsMonster)
+        {
             Current.AddTargetDamage(e.Target, e.Amount);
+            TrackBossDamage(e.Target, e.Amount);
+        }
 
         if (learnable && !IsMonsterName(owner))
         {
@@ -166,9 +185,46 @@ public sealed class CombatTracker
         Version++;
     }
 
+    void TrackBossDamage(string target, long amount)
+    {
+        if (IsYou(target) || Current.Combatants.TryGetValue(target, out var t) && !t.IsMonster && !t.IsBoss
+            && t.Class != AionClass.Unknown)
+            return;
+        var total = damageThisLife.GetValueOrDefault(target) + amount;
+        damageThisLife[target] = total;
+        if (total >= Options.BossDamageThreshold && detectedBosses.Add(target))
+            ApplyBoss(target);
+    }
+
+    /// <summary>Marks or unmarks a monster as a boss by hand.</summary>
+    public void SetBoss(string name, bool isBoss)
+    {
+        if (isBoss)
+            KnownBosses.Add(name);
+        else
+        {
+            KnownBosses.Remove(name);
+            detectedBosses.Remove(name);
+        }
+        ApplyBoss(name);
+    }
+
+    void ApplyBoss(string name)
+    {
+        if (Current.Combatants.TryGetValue(name, out var c))
+        {
+            c.IsBoss = IsBoss(name);
+            c.IsMonster = c.IsBoss || IsMonsterName(name);
+            c.Class = ResolveClass(c);
+        }
+        Version++;
+    }
+
     /// <summary>Clears all damage and healing and starts over.</summary>
     public void Reset()
     {
+        damageThisLife.Clear();
+        detectedBosses.Clear();
         dotOwners.Clear();
         lastSkillUser.Clear();
         hotOwners.Clear();
@@ -223,7 +279,11 @@ public sealed class CombatTracker
             name = LogParser.You;
         if (!enc.Combatants.TryGetValue(name, out var c))
         {
-            c = new Combatant(name, DisplayNameOf(name), name == LogParser.You, IsMonsterName(name));
+            var boss = name != LogParser.You && IsBoss(name);
+            c = new Combatant(name, DisplayNameOf(name), name == LogParser.You, boss || IsMonsterName(name))
+            {
+                IsBoss = boss,
+            };
             enc.Combatants[name] = c;
         }
         return c;
