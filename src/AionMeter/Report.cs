@@ -10,10 +10,15 @@ public static class Report
     /// <param name="count">How many top players to include; 0 or less means everyone.</param>
     public static string Build(IEnumerable<CombatantRow> rows, int count = 0)
     {
-        // One line, e.g. "1-Batte 456.7k  2-Grop 310.2k  3-Lumi 98.4k"
-        var list = rows.OrderBy(r => r.Rank);
-        return string.Join("  ", (count > 0 ? list.Take(count) : list)
-            .Select(r => $"{r.Rank}-{r.Name} {r.ValueText}"));
+        // One line, e.g. "[Kromede] 1-Batte 456.7k  2-Grop 310.2k  3-Lumi 98.4k".
+        // A shown boss (or else the top monster) goes in front; only players are ranked.
+        var all = rows.OrderBy(r => r.Rank).ToList();
+        var mob = all.FirstOrDefault(r => r.IsBoss) ?? all.FirstOrDefault(r => r.IsMonster);
+        var players = all.Where(r => !r.IsMonster);
+        var ranking = string.Join("  ", (count > 0 ? players.Take(count) : players)
+            .Select((r, i) => $"{i + 1}-{r.Name} {r.ValueText}"));
+        // Key is the plain log name, without the "BOSS " prefix shown in the meter.
+        return mob == null ? ranking : $"[{mob.Key}] {ranking}".TrimEnd();
     }
 
     /// <summary>Copies the list; returns false if there was nothing to copy or the clipboard was busy.</summary>
