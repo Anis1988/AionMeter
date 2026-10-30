@@ -15,6 +15,7 @@ public static class SkillData
             "Ferocious Strike", "Robust Blow", "Body Smash", "Weakening Severe Blow", "Seismic Wave",
             "Seismic Billow", "Pressure Wave", "Sharp Strike", "Crashing Wind Strike", "Tendon Slice",
             "Great Cleave", "Piercing Rupture", "Cleave", "Wrathful Strike", "Shock Wave",
+            "Draining Blow", "Springing Slice",
         ],
         [AionClass.Templar] =
         [
@@ -27,7 +28,7 @@ public static class SkillData
             "Swift Edge", "Fang Strike", "Soul Slash", "Surprise Attack", "Ambush", "Assassination",
             "Killing Spree", "Whirlwind Slash", "Lightning Slash", "Rune Carve", "Pain Rune", "Rune Knife",
             "Beast Kick", "Beast Swipe", "Sigil Strike", "Blood Rune", "Heart Gore", "Shadowfall",
-            "Apply Poison", "Apply Deadly Poison",
+            "Apply Poison", "Apply Deadly Poison", "Ambush Attack",
         ],
         [AionClass.Ranger] =
         [
@@ -41,7 +42,7 @@ public static class SkillData
             "Flame Bolt", "Flame Spray", "Flame Cage", "Flame Harpoon", "Flame Fusion", "Ice Chain",
             "Ice Harpoon", "Glacial Shard", "Frozen Shock", "Blaze", "Storm Strike", "Wind Cut Down",
             "Winter Binding", "Lumiel's Wrath", "Cyclone Strike", "Delayed Blast", "Soul Freeze",
-            "Aether's Hold", "Infernal Blaze",
+            "Aether's Hold", "Infernal Blaze", "Freezing Wind",
         ],
         [AionClass.Spiritmaster] =
         [
@@ -61,8 +62,15 @@ public static class SkillData
             "Incandescent Blow", "Soul Crush", "Disorienting Blow", "Inescapable Judgment", "Pentacle Shock",
             "Mountain Crash", "Recovery Spell", "Healing Conduit", "Word of Revival",
         ],
-        [AionClass.Gunner] = [],
-        [AionClass.Songweaver] = [],
+        [AionClass.Gunner] =
+        [
+            "Debilitating Volley", "Weakpoint Shot",
+        ],
+        [AionClass.Songweaver] =
+        [
+            "Chilling Harmony", "Flame Harmony", "Earth Harmony", "Attack Resonation",
+            "Requiem of Oblivion", "Melody of Reflection",
+        ],
         [AionClass.Aethertech] = [],
     };
 

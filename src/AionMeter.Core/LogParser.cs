@@ -52,6 +52,21 @@ public static class LogParser
     const string Prefix = @"^(?<ts>\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) : (?<crit>Critical [A-Za-z]+(?: [A-Za-z]+)?!\s*)?";
     const string Amount = @"(?<dmg>\d[\d,.]*)";
 
+    // "Lagoto inflicted 168 damage on Zoooog by reflecting the attack."
+    static readonly Regex ReflectRx = new(
+        Prefix + @"(?<src>.+?) inflicted " + Amount + @" (?:critical )?damage on (?<tgt>.+?) by reflecting the attack\.\s*$",
+        Options);
+
+    // "[Protector] received 363 damage inflicted on Npcfox by Schuka, because of the protection effect cast on it."
+    static readonly Regex ProtectedRx = new(
+        Prefix + @".+? received " + Amount + @" damage inflicted on (?<tgt>.+?) by (?<src>.+?), because of the protection effect.*$",
+        Options);
+
+    // "Npcfox received 26 bleeding damage after you used Lifeline Penetration."
+    static readonly Regex AfterUsedRx = new(
+        Prefix + @"(?<tgt>.+?) received " + Amount + @" (?:[a-z]+ )?damage after (?<src>.+?) used (?<skill>.+?)\.\s*$",
+        Options);
+
     // "You inflicted 16,536 damage on Protectorate Searcher by using Wilderness Rage."
     // "Grop inflicted 812 critical damage on X."
     // "You inflicted 900 damage and the rune carve effect on X by using Rune Carve."
@@ -61,7 +76,7 @@ public static class LogParser
 
     // "Protectorate Hunter received 300 damage due to the effect of Poison Arrow."
     static readonly Regex DotRx = new(
-        Prefix + @"(?<tgt>.+?) received " + Amount + @" (?:critical )?damage due to the effect of (?<skill>.+?)\.\s*$",
+        Prefix + @"(?<tgt>.+?) received " + Amount + @" (?:[a-z]+ )?damage due to the effect of (?<skill>.+?)\.\s*$",
         Options);
 
     // "Protectorate Hunter received 300 damage from Grop."
@@ -82,6 +97,18 @@ public static class LogParser
     // "Grop recovered 500 HP due to the effect of Light of Rejuvenation."
     static readonly Regex HealTickRx = new(
         Prefix + @"(?<tgt>.+?) recovered " + Amount + @" HP due to the effect of (?<skill>.+?)\.\s*$",
+        Options);
+
+    // "You restored 770 of Zoooog's HP by using Draining Blow."
+    // Gamez writes "You" here even when the HP owner healed themselves (potions, drains),
+    // so the heal is credited to the HP owner.
+    static readonly Regex RestoredOfRx = new(
+        Prefix + @".+? restored " + Amount + @" of (?<tgt>.+?)'s HP(?: by using (?<skill>.+?))?\.\s*$",
+        Options);
+
+    // "Weirdflexbutokay has defeated Lagoto."
+    static readonly Regex DefeatedRx = new(
+        Prefix + @"(?<src>.+?) has defeated (?<tgt>.+?)\.\s*$",
         Options);
 
     // "You restored 2,345 HP of Grop by using Healing Light."
@@ -116,12 +143,37 @@ public static class LogParser
             var k = KillRx.Match(line);
             return k.Success ? Create(k, "", CombatEventKind.Kill) : null;
         }
+        if (line.Contains(" has defeated ", StringComparison.Ordinal))
+        {
+            var d = DefeatedRx.Match(line);
+            if (d.Success && DateTime.TryParseExact(d.Groups["ts"].Value, "yyyy.MM.dd HH:mm:ss",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                return new CombatEvent(dt, NormalizeName(d.Groups["src"].Value), NormalizeName(d.Groups["tgt"].Value),
+                    0, false, null, CombatEventKind.Kill);
+            return null;
+        }
         if (line.Contains(" HP", StringComparison.Ordinal) && ParseHeal(line) is { } heal)
             return heal;
         if (!line.Contains(" damage", StringComparison.Ordinal))
             return null;
 
-        var m = HitRx.Match(line);
+        var m = ReflectRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["src"].Value, CombatEventKind.Hit) is { } reflect
+                ? reflect with { Skill = "Reflect" }
+                : null;
+
+        m = ProtectedRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["src"].Value, CombatEventKind.Hit) is { } shielded
+                ? shielded with { Skill = "Absorbed by protection" }
+                : null;
+
+        m = AfterUsedRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["src"].Value, CombatEventKind.Hit);
+
+        m = HitRx.Match(line);
         if (m.Success)
             return Create(m, m.Groups["src"].Value, CombatEventKind.Hit);
 
@@ -147,6 +199,10 @@ public static class LogParser
             return Create(m, "", CombatEventKind.HealOverTime);
 
         m = HealByRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["tgt"].Value, CombatEventKind.Heal);
+
+        m = RestoredOfRx.Match(line);
         if (m.Success)
             return Create(m, m.Groups["tgt"].Value, CombatEventKind.Heal);
 

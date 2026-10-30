@@ -78,7 +78,18 @@ public sealed class CombatTracker
             return;
         }
         if (e.Amount <= 0)
+        {
+            // A fully absorbed hit still tells us which class used the skill.
+            if (e.Kind == CombatEventKind.Hit && Detector.Lookup(e.Skill) is var cls && cls != AionClass.Unknown
+                && !IsMonsterName(e.Source))
+            {
+                var attacker = GetOrAdd(Current, e.Source);
+                attacker.Vote(cls);
+                attacker.Class = ResolveClass(attacker);
+                Version++;
+            }
             return;
+        }
         if (e.Kind is CombatEventKind.Heal or CombatEventKind.HealOverTime)
         {
             ProcessHeal(e);
@@ -169,6 +180,17 @@ public sealed class CombatTracker
         {
             hotOwners[(e.Target, skill)] = healer;
             lastHealer[skill] = healer;
+        }
+
+        // Healing your summon (spirit armour etc.) counts as yours.
+        if (Options.MergeSummons && ClassDetector.SummonClass(healer) != AionClass.Unknown)
+        {
+            var owner = SummonOwner(healer);
+            if (owner == null)
+                return;
+            skill = PetSkill(healer, skill);
+            healer = owner;
+            learnable = false;
         }
 
         // Monsters healing themselves aren't interesting.
