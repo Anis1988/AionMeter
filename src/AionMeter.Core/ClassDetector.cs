@@ -62,6 +62,5 @@ public sealed class ClassDetector
         return true;
     }
 
-    public static AionClass SummonClass(string name) =>
-        SkillData.Summons.TryGetValue(name, out var cls) ? cls : AionClass.Unknown;
+    public static AionClass SummonClass(string name) => SkillData.SummonClass(name);
 }

@@ -20,6 +20,7 @@ public sealed class CombatTracker
 {
     public const string UnknownDotName = "Other (DoT)";
     public const string UnknownHotName = "Other (heal over time)";
+    public const string UnknownSummonName = "Other (summons)";
 
     // Aion character names are a single word; mobs usually have spaces in theirs.
     static readonly Regex PlayerName = new(@"^[\p{L}\p{Nd}]+$", RegexOptions.Compiled);
@@ -31,6 +32,7 @@ public sealed class CombatTracker
     readonly Dictionary<string, string> lastHealer = new(StringComparer.OrdinalIgnoreCase);
     readonly Dictionary<string, long> damageThisLife = new(StringComparer.OrdinalIgnoreCase);
     readonly HashSet<string> detectedBosses = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<string, string> summonOwners = new(StringComparer.OrdinalIgnoreCase);
 
     public CombatTracker(TrackerOptions? options = null, ClassDetector? detector = null,
         IEnumerable<KeyValuePair<string, AionClass>>? classOverrides = null)
@@ -64,6 +66,11 @@ public sealed class CombatTracker
 
     public void Process(CombatEvent e)
     {
+        if (e.Kind == CombatEventKind.Summon)
+        {
+            summonOwners[e.Target] = e.Source;
+            return;
+        }
         if (e.Kind == CombatEventKind.Kill)
         {
             // It died, so the next one with this name starts from zero.
@@ -114,11 +121,11 @@ public sealed class CombatTracker
             owner = petMatch.Groups["owner"].Value;
             learnable = false;
         }
-        else if (Options.MergeSummons && ClassDetector.SummonClass(owner) is var summonClass
-                 && summonClass != AionClass.Unknown && summonClass == ClassOf(LogParser.You))
+        else if (Options.MergeSummons && ClassDetector.SummonClass(owner) != AionClass.Unknown
+                 && !AttacksPlayer(e.Target))
         {
             skill = PetSkill(owner, skill);
-            owner = LogParser.You;
+            owner = SummonOwner(owner) ?? UnknownSummonName;
             learnable = false;
         }
 
@@ -225,6 +232,7 @@ public sealed class CombatTracker
     {
         damageThisLife.Clear();
         detectedBosses.Clear();
+        summonOwners.Clear();
         dotOwners.Clear();
         lastSkillUser.Clear();
         hotOwners.Clear();
@@ -263,8 +271,8 @@ public sealed class CombatTracker
     }
 
     public static bool IsMonsterName(string name) =>
-        name != LogParser.You && name != UnknownDotName && name != UnknownHotName && !PlayerName.IsMatch(name)
-        && ClassDetector.SummonClass(name) == AionClass.Unknown;
+        name != LogParser.You && name != UnknownDotName && name != UnknownHotName && name != UnknownSummonName
+        && !PlayerName.IsMatch(name);
 
     bool IsYou(string name) =>
         name == LogParser.You
@@ -298,6 +306,35 @@ public sealed class CombatTracker
             return owner;
         return bySkill.GetValueOrDefault(skill);
     }
+
+    /// <summary>
+    /// Who a summon belongs to: whoever was seen summoning it, else you if you're that class,
+    /// else the only player of that class in the fight. Null if it can't be told.
+    /// </summary>
+    string? SummonOwner(string pet)
+    {
+        if (summonOwners.TryGetValue(pet, out var summoner))
+            return summoner;
+
+        var cls = ClassDetector.SummonClass(pet);
+        var yours = ClassOf(LogParser.You);
+        if (yours == cls)
+            return LogParser.You;
+
+        var players = Current.Combatants.Values
+            .Where(c => !c.IsMonster && !c.IsYou && c.Class == cls)
+            .Select(c => c.Name)
+            .ToList();
+        if (players.Count == 1)
+            return players[0];
+
+        // Your class isn't known yet and nobody else is that class: most likely yours.
+        return yours == AionClass.Unknown && players.Count == 0 ? LogParser.You : null;
+    }
+
+    /// <summary>A "spirit" hitting you or another player is a monster, not someone's summon.</summary>
+    bool AttacksPlayer(string target) =>
+        IsYou(target) || Current.Combatants.TryGetValue(target, out var t) && !t.IsMonster;
 
     static string PetSkill(string pet, string? skill) => skill == null ? pet : $"{pet}: {skill}";
 

@@ -66,7 +66,28 @@ public static class SkillData
         [AionClass.Aethertech] = [],
     };
 
-    /// <summary>Summons whose damage shows up under their own name.</summary>
+    /// <summary>
+    /// Class of a summon (spirit, servant, trap…) from its name, or Unknown if the name isn't one.
+    /// Summons deal damage under their own name, so this keeps them from showing up as players.
+    /// </summary>
+    public static AionClass SummonClass(string name)
+    {
+        if (Summons.TryGetValue(name, out var cls))
+            return cls;
+        var n = name.Trim();
+        if (n.EndsWith(" Spirit", StringComparison.OrdinalIgnoreCase)
+            || n.EndsWith(" Servant", StringComparison.OrdinalIgnoreCase)
+            || n.EndsWith(" Elemental", StringComparison.OrdinalIgnoreCase))
+            return AionClass.Spiritmaster;
+        if (n.Contains(" Trap", StringComparison.OrdinalIgnoreCase)
+            || n.StartsWith("Trap of ", StringComparison.OrdinalIgnoreCase))
+            return AionClass.Ranger;
+        if (n.EndsWith(" Turret", StringComparison.OrdinalIgnoreCase))
+            return AionClass.Gunner;
+        return AionClass.Unknown;
+    }
+
+    /// <summary>Summons with known names whose class the patterns above wouldn't get right.</summary>
     public static IReadOnlyDictionary<string, AionClass> Summons { get; } =
         new Dictionary<string, AionClass>(StringComparer.OrdinalIgnoreCase)
         {
@@ -77,5 +98,7 @@ public static class SkillData
             ["Magma Spirit"] = AionClass.Spiritmaster,
             ["Tempest Spirit"] = AionClass.Spiritmaster,
             ["Holy Servant"] = AionClass.Cleric,
+            ["Noble Energy"] = AionClass.Cleric,
+            ["Cyclone Servant"] = AionClass.Spiritmaster,
         };
 }

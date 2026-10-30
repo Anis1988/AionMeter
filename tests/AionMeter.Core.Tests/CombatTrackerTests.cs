@@ -198,4 +198,62 @@ public class CombatTrackerTests
         Assert.True(kromede.IsBoss);
         Assert.True(kromede.IsMonster);
     }
+
+    [Fact]
+    public void CycloneServantCountsAsYourDamage()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", YourClass = AionClass.Spiritmaster },
+            "2026.10.28 17:00:00 : You inflicted 1,000 damage on Mob A.",
+            "2026.10.28 17:00:01 : Cyclone Servant inflicted 700 damage on Mob A by using Cyclone Strike.");
+
+        Assert.Equal(1700, t.Current.Combatants[LogParser.You].Damage);
+        Assert.DoesNotContain("Cyclone Servant", t.Current.Combatants.Keys);
+        Assert.Contains("Cyclone Servant: Cyclone Strike", t.Current.Combatants[LogParser.You].Skills.Keys);
+    }
+
+    [Fact]
+    public void SummonGoesToWhoeverSummonedIt()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", YourClass = AionClass.Ranger },
+            "2026.10.28 17:00:00 : Grop summoned Wind Servant by using Summon Wind Servant.",
+            "2026.10.28 17:00:01 : Wind Servant inflicted 500 damage on Mob A.");
+
+        Assert.Equal(500, t.Current.Combatants["Grop"].Damage);
+        Assert.DoesNotContain("Wind Servant", t.Current.Combatants.Keys);
+    }
+
+    [Fact]
+    public void SummonGoesToTheOnlyPlayerOfThatClass()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", YourClass = AionClass.Templar },
+            "2026.10.28 17:00:00 : Zen inflicted 900 damage on Mob A by using Erosion.",
+            "2026.10.28 17:00:01 : Fire Spirit inflicted 400 damage on Mob A.",
+            "2026.10.28 17:00:02 : Lumi inflicted 300 damage on Mob A by using Arrow Strike.",
+            "2026.10.28 17:00:03 : Explosive Trap inflicted 200 damage on Mob A.");
+
+        Assert.Equal(1300, t.Current.Combatants["Zen"].Damage);
+        Assert.Equal(500, t.Current.Combatants["Lumi"].Damage);
+    }
+
+    [Fact]
+    public void UnknownOwnerSummonsDoNotBecomePlayers()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", YourClass = AionClass.Templar },
+            "2026.10.28 17:00:00 : Zen inflicted 900 damage on Mob A by using Erosion.",
+            "2026.10.28 17:00:01 : Kai inflicted 900 damage on Mob A by using Spirit Erosion.",
+            "2026.10.28 17:00:02 : Earth Spirit inflicted 400 damage on Mob A.");
+
+        Assert.Equal(400, t.Current.Combatants[CombatTracker.UnknownSummonName].Damage);
+        Assert.DoesNotContain("Earth Spirit", t.Current.Combatants.Keys);
+    }
+
+    [Fact]
+    public void SpiritMonsterAttackingYouIsNotYourSummon()
+    {
+        var t = Run(new TrackerOptions { YourName = "Batte", YourClass = AionClass.Spiritmaster },
+            "2026.10.28 17:00:00 : Raging Fire Spirit inflicted 400 damage on you.");
+
+        Assert.True(t.Current.Combatants["Raging Fire Spirit"].IsMonster);
+        Assert.False(t.Current.Combatants.ContainsKey(LogParser.You));
+    }
 }

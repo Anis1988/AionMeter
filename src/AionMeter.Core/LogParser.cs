@@ -19,6 +19,9 @@ public enum CombatEventKind
 
     /// <summary>A monster died (you got XP for it). Amount is the XP.</summary>
     Kill,
+
+    /// <summary>Someone summoned something; Source is the summoner and Target the summon.</summary>
+    Summon,
 }
 
 /// <summary>What the meter ranks players by.</summary>
@@ -91,10 +94,23 @@ public static class LogParser
         Prefix + @"You have gained " + Amount + @" XP from (?<tgt>.+?)(?: \(.*\))?\.\s*$",
         Options);
 
+    // "You summoned Cyclone Servant by using Summon Cyclone Servant." / "Grop has summoned Fire Spirit."
+    static readonly Regex SummonRx = new(
+        Prefix + @"(?<src>.+?) (?:have |has )?summoned (?:an? |the )?(?<tgt>.+?)(?: by using (?<skill>.+?))?\.\s*$",
+        Options);
+
     public static CombatEvent? Parse(string line)
     {
         if (string.IsNullOrEmpty(line))
             return null;
+        if (line.Contains(" summoned ", StringComparison.Ordinal))
+        {
+            var s = SummonRx.Match(line);
+            if (s.Success && DateTime.TryParseExact(s.Groups["ts"].Value, "yyyy.MM.dd HH:mm:ss",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var t))
+                return new CombatEvent(t, NormalizeName(s.Groups["src"].Value), s.Groups["tgt"].Value.Trim(), 0,
+                    false, s.Groups["skill"].Success ? s.Groups["skill"].Value.Trim() : null, CombatEventKind.Summon);
+        }
         if (line.Contains(" XP from ", StringComparison.Ordinal))
         {
             var k = KillRx.Match(line);
