@@ -7,7 +7,7 @@ namespace AionMeter;
 /// <summary>Reads Chat.log on a timer and keeps the tracker and overlay rows up to date.</summary>
 public sealed class MeterController
 {
-    readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(400) };
+    readonly DispatcherTimer timer = new(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(500) };
     ChatLogReader? reader;
     int shownVersion = -1;
     Encounter? shownEncounter;
