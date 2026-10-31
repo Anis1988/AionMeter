@@ -38,6 +38,15 @@ public sealed class Settings
 
     /// <summary>Empty Chat.log when the meter starts so it doesn't grow forever (like ARM).</summary>
     public bool ClearChatLogOnStart { get; set; } = true;
+
+    /// <summary>Send unread lines to <see cref="ReportRepo"/> every hour.</summary>
+    public bool AutoReport { get; set; }
+
+    /// <summary>Private GitHub repo (owner/name) that collects unread lines.</summary>
+    public string ReportRepo { get; set; } = "Anis1988/aionmeter-logs";
+
+    /// <summary>GitHub token, encrypted for this Windows user.</summary>
+    public string ReportTokenProtected { get; set; } = "";
     public MeterMode Mode { get; set; } = MeterMode.Damage;
 
     /// <summary>How many top players the Copy button copies; 0 copies everyone.</summary>

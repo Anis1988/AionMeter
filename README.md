@@ -77,6 +77,13 @@ The meter checks every line as you play. If a line has a damage or HP number but
 read it, it saves one copy to `%AppData%\AionMeter\unread-lines.log` and shows **⚠ N unread** at the
 bottom of the meter. Settings → **Open unread lines** shows the file; send it in so those lines can be added.
 
+**Automatic reporting (optional):** make a **private** GitHub repo (for example `aionmeter-logs`) and a
+fine-grained token that can only read/write that repo's contents. In settings, tick
+**Send unread lines to my private GitHub repo every hour**, enter the repo and token, and press
+**Send now** to test. Only unread damage/HP lines are sent, never chat. The token is stored encrypted
+for your Windows user. A scheduled Claude task reads that file every hour and adds the missing lines
+to the meter.
+
 ## Limitations
 
 - Healing is read from lines like `Grop recovered 2,345 HP because Lumi used Healing Light.` If your server words heals differently, they won't show up yet.

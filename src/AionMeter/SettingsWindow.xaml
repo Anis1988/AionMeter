@@ -60,6 +60,28 @@
             <TextBlock x:Name="UnreadText" Margin="10,0,0,0" VerticalAlignment="Center"
                        Foreground="{StaticResource MutedBrush}" />
         </StackPanel>
+        <CheckBox x:Name="AutoReportBox" Content="Send unread lines to my private GitHub repo every hour"
+                  Margin="0,0,0,6" />
+        <Grid Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Repo (owner/name)" Margin="0,0,0,4" />
+                <TextBox x:Name="ReportRepoBox" Padding="3" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="GitHub token" Margin="0,0,0,4" />
+                <PasswordBox x:Name="ReportTokenBox" Padding="3" />
+            </StackPanel>
+        </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Send now" Style="{StaticResource DarkButton}" Padding="10,4" Click="SendNow_Click" />
+            <TextBlock x:Name="ReportStatusText" Margin="10,0,0,0" VerticalAlignment="Center"
+                       Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
         <CheckBox x:Name="SummonsBox" Content="Count my summons (spirits, servants) as my damage"
                   Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
 

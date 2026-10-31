@@ -13,6 +13,10 @@ public sealed class MeterController
     Encounter? shownEncounter;
     DateTime lastSave = DateTime.UtcNow;
     readonly HashSet<string> unreadSeen = new(StringComparer.Ordinal);
+    readonly DispatcherTimer reportTimer = new(DispatcherPriority.Background) { Interval = TimeSpan.FromHours(1) };
+
+    /// <summary>Result of the last send to GitHub, for the settings window.</summary>
+    public string ReportStatus { get; private set; } = "";
 
     /// <summary>Damage/heal lines the meter couldn't read are saved here, so they can be sent in and fixed.</summary>
     public static readonly string UnreadFile = Path.Combine(Settings.Folder, "unread-lines.log");
@@ -30,6 +34,25 @@ public sealed class MeterController
         Tracker.KnownBosses.UnionWith(settings.KnownBosses);
         ApplySettings();
         timer.Tick += (_, _) => Tick();
+        reportTimer.Tick += async (_, _) => await SendReportAsync(onlyIfEnabled: true);
+    }
+
+    /// <summary>Sends unread lines to the report repo. Runs hourly when enabled, or on demand.</summary>
+    public async Task<string> SendReportAsync(bool onlyIfEnabled = false)
+    {
+        if (onlyIfEnabled && !Settings.AutoReport)
+            return ReportStatus;
+        try
+        {
+            ReportStatus = await Reporter.SendAsync(Settings.ReportRepo.Trim(),
+                Reporter.Unprotect(Settings.ReportTokenProtected), UnreadFile);
+        }
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException or IOException)
+        {
+            ReportStatus = "Couldn't reach GitHub: " + ex.Message;
+        }
+        ReportStatus = $"{DateTime.Now:HH:mm} {ReportStatus}";
+        return ReportStatus;
     }
 
     public Settings Settings { get; }
@@ -96,6 +119,7 @@ public sealed class MeterController
             ClearChatLog();
         Tick();
         timer.Start();
+        reportTimer.Start();
     }
 
     /// <summary>Applies changed settings; reopens the log if the folder changed.</summary>

@@ -28,6 +28,10 @@ public partial class SettingsWindow : Window
         MonstersBox.IsChecked = settings.ShowMonsters;
         SummonsBox.IsChecked = settings.MergeSummons;
         ClearLogBox.IsChecked = settings.ClearChatLogOnStart;
+        AutoReportBox.IsChecked = settings.AutoReport;
+        ReportRepoBox.Text = settings.ReportRepo;
+        ReportTokenBox.Password = Reporter.Unprotect(settings.ReportTokenProtected);
+        ReportStatusText.Text = controller.ReportStatus;
         ShowLogSize();
         UnreadText.Text = controller.UnreadCount == 0 ? "None so far" : $"{controller.UnreadCount} this session";
 
@@ -59,6 +63,21 @@ public partial class SettingsWindow : Window
         var message = controller.ClearChatLog();
         ShowLogSize();
         LogSizeText.Text = message;
+    }
+
+    void SaveReportFields()
+    {
+        settings.AutoReport = AutoReportBox.IsChecked == true;
+        settings.ReportRepo = ReportRepoBox.Text.Trim();
+        settings.ReportTokenProtected = Reporter.Protect(ReportTokenBox.Password.Trim());
+    }
+
+    async void SendNow_Click(object sender, RoutedEventArgs e)
+    {
+        SaveReportFields();
+        settings.Save();
+        ReportStatusText.Text = "Sending...";
+        ReportStatusText.Text = await controller.SendReportAsync();
     }
 
     void OpenUnread_Click(object sender, RoutedEventArgs e)
@@ -106,6 +125,7 @@ public partial class SettingsWindow : Window
         settings.ShowMonsters = MonstersBox.IsChecked == true;
         settings.MergeSummons = SummonsBox.IsChecked == true;
         settings.ClearChatLogOnStart = ClearLogBox.IsChecked == true;
+        SaveReportFields();
         DialogResult = true;
     }
 }
