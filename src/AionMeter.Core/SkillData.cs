@@ -10,68 +10,86 @@ public static class SkillData
 {
     public static IReadOnlyDictionary<AionClass, string[]> Skills { get; } = new Dictionary<AionClass, string[]>
     {
+        // Skills seen on Gamez are listed with the rest; skills two classes share are left out.
         [AionClass.Gladiator] =
         [
-            "Ferocious Strike", "Robust Blow", "Body Smash", "Weakening Severe Blow", "Seismic Wave",
+            "Ferocious Strike", "Robust Blow", "Weakening Severe Blow", "Seismic Wave",
             "Seismic Billow", "Pressure Wave", "Sharp Strike", "Crashing Wind Strike", "Tendon Slice",
             "Great Cleave", "Piercing Rupture", "Cleave", "Wrathful Strike", "Shock Wave",
-            "Draining Blow", "Springing Slice",
+            "Draining Blow", "Springing Slice", "Repeated Body Smash", "Body Blow", "Lockdown",
+            "Fury Absorption", "Sure Strike", "Energy Explosion", "Blade of Incitement", "Whirling Strike",
         ],
         [AionClass.Templar] =
         [
             "Divine Blow", "Dazing Severe Blow", "Shining Slash", "Holy Punishment", "Judgment",
             "Punishment", "Righteous Cleave", "Provoking Shield Counter", "Shield Counter", "Face Smash",
-            "Inquisitor's Blow", "Empyrean Fury", "Divine Fury", "Doom Lure",
+            "Inquisitor's Blow", "Empyrean Fury", "Divine Fury", "Doom Lure", "Tractor Beam",
+            "Bloodsword Slash", "Bloodsucking Punishment", "Elimination Strike", "Capture", "Illusion Chains",
+            "Divine Justice",
         ],
         [AionClass.Assassin] =
         [
             "Swift Edge", "Fang Strike", "Soul Slash", "Surprise Attack", "Ambush", "Assassination",
             "Killing Spree", "Whirlwind Slash", "Lightning Slash", "Rune Carve", "Pain Rune", "Rune Knife",
             "Beast Kick", "Beast Swipe", "Sigil Strike", "Blood Rune", "Heart Gore", "Shadowfall",
-            "Apply Poison", "Apply Deadly Poison", "Ambush Attack",
+            "Apply Poison", "Apply Deadly Poison", "Ambush Attack", "Sneak Ambush", "Deadly Abandon",
+            "Shadow Walk",
         ],
         [AionClass.Ranger] =
         [
             "Swift Shot", "Aimed Shot", "Rupture Arrow", "Arrow Strike", "Spiral Arrow", "Arrow Storm",
             "Heart Shot", "Gale Arrow", "Shock Arrow", "Seizure Arrow", "Stunning Shot", "Lightning Arrow",
             "Arrow Deluge", "Silence Arrow", "Retreating Shot", "Deadshot", "Entangling Shot", "Poison Arrow",
-            "Explosive Trap", "Spike Trap", "Thunderbolt Trap", "Sandstorm Trap",
+            "Explosive Trap", "Spike Trap", "Thunderbolt Trap", "Sandstorm Trap", "Sniper Shot",
+            "Fleshcutter Arrow", "Raging Wind Arrow", "Explosive Arrow", "Shackle Arrow", "Agonising Arrow",
+            "Manaleech Shot", "Focused Shots", "Strengthening Eye", "Hunter's Might",
         ],
         [AionClass.Sorcerer] =
         [
             "Flame Bolt", "Flame Spray", "Flame Cage", "Flame Harpoon", "Flame Fusion", "Ice Chain",
             "Ice Harpoon", "Glacial Shard", "Frozen Shock", "Blaze", "Storm Strike", "Wind Cut Down",
             "Winter Binding", "Lumiel's Wrath", "Cyclone Strike", "Delayed Blast", "Soul Freeze",
-            "Aether's Hold", "Infernal Blaze", "Freezing Wind",
+            "Aether's Hold", "Freezing Wind", "Summon Rock", "Ice Sheet",
         ],
         [AionClass.Spiritmaster] =
         [
             "Erosion", "Spirit Erosion", "Fear Shriek", "Chain of Earth", "Cyclone of Wrath", "Absorb Energy",
             "Ignite Aether", "Sandblaster", "Cursecloud", "Magic Implosion", "Spirit Detonation",
-            "Infernal Blight",
+            "Infernal Blight", "Sympathetic Mind",
         ],
         [AionClass.Cleric] =
         [
             "Smite", "Chastise", "Earth's Wrath", "Divine Spark", "Enfeebling Burst",
             "Healing Light", "Light of Recovery", "Radiant Cure", "Healing Wind", "Light of Rejuvenation",
-            "Flash of Recovery", "Splendor of Recovery",
+            "Flash of Recovery", "Splendor of Recovery", "Penance", "Hand of Reincarnation",
+            "Summon Healing Servant", "Divine Touch", "Lightning Bolt of Retaliation", "Life Shield",
+            "Immortal Shroud",
         ],
         [AionClass.Chanter] =
         [
             "Meteor Strike", "Booming Strike", "Booming Smash", "Booming Assault", "Parrying Strike",
             "Incandescent Blow", "Soul Crush", "Disorienting Blow", "Inescapable Judgment", "Pentacle Shock",
-            "Mountain Crash", "Recovery Spell", "Healing Conduit", "Word of Revival",
+            "Mountain Crash", "Recovery Spell", "Healing Conduit", "Word of Revival", "Healing Burst",
+            "Word of Protection",
         ],
         [AionClass.Gunner] =
         [
-            "Debilitating Volley", "Weakpoint Shot",
+            "Debilitating Volley", "Weakpoint Shot", "Headshot", "Lifeline Penetration", "Between the Eyes",
+            "Encircling Bomb", "Soulsucker Shot", "Fissure Cannonball", "Snow Projectile",
+            "Enhance Magic Projectile", "Load Magic Projectile", "Trueshot Magic Eye",
         ],
         [AionClass.Songweaver] =
         [
             "Chilling Harmony", "Flame Harmony", "Earth Harmony", "Attack Resonation",
-            "Requiem of Oblivion", "Melody of Reflection",
+            "Requiem of Oblivion", "Melody of Reflection", "Harmony of Destruction", "Harmony of Death",
+            "Gust Requiem", "Soul Harmony", "Harmony of Silence", "Melody of Courage", "Attack Melody",
+            "Melody of Cheer", "Illusion Tone", "Rejuvenation Melody", "Echo of Clarity", "Shield Melody",
+            "March of the Jester",
         ],
-        [AionClass.Aethertech] = [],
+        [AionClass.Aethertech] =
+        [
+            "Rapid Rush", "Repeated Rush", "Fist Fire", "Quick Recharge",
+        ],
     };
 
     /// <summary>
@@ -108,5 +126,6 @@ public static class SkillData
             ["Holy Servant"] = AionClass.Cleric,
             ["Noble Energy"] = AionClass.Cleric,
             ["Cyclone Servant"] = AionClass.Spiritmaster,
+            ["Healing Servant"] = AionClass.Cleric,
         };
 }

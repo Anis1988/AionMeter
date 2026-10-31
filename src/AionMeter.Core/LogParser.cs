@@ -22,6 +22,12 @@ public enum CombatEventKind
 
     /// <summary>Someone summoned something; Source is the summoner and Target the summon.</summary>
     Summon,
+
+    /// <summary>
+    /// Someone used a skill without a damage number (a DoT being applied, a buff, a stun).
+    /// Used to know who owns damage-over-time ticks and to detect classes.
+    /// </summary>
+    SkillUse,
 }
 
 /// <summary>What the meter ranks players by.</summary>
@@ -54,7 +60,7 @@ public static class LogParser
 
     // "Lagoto inflicted 168 damage on Zoooog by reflecting the attack."
     static readonly Regex ReflectRx = new(
-        Prefix + @"(?<src>.+?) inflicted " + Amount + @" (?:critical )?damage on (?<tgt>.+?) by reflecting the attack\.\s*$",
+        Prefix + @"(?<src>.+?) (?:has )?inflicted " + Amount + @" (?:critical )?damage on (?<tgt>.+?) by reflecting the attack\.\s*$",
         Options);
 
     // "[Protector] received 363 damage inflicted on Npcfox by Schuka, because of the protection effect cast on it."
@@ -70,8 +76,10 @@ public static class LogParser
     // "You inflicted 16,536 damage on Protectorate Searcher by using Wilderness Rage."
     // "Grop inflicted 812 critical damage on X."
     // "You inflicted 900 damage and the rune carve effect on X by using Rune Carve."
+    // "Chico inflicted 663 damage on Churry and caused the Rune Carve effect by using Fang Strike."
+    // "Konsa has inflicted 769 damage on you by using Gale Arrow."
     static readonly Regex HitRx = new(
-        Prefix + @"(?<src>.+?) inflicted " + Amount + @" (?:critical )?damage(?: and .+?)? on (?<tgt>.+?)(?: by using (?<skill>.+?))?\.\s*$",
+        Prefix + @"(?<src>.+?) (?:has )?inflicted " + Amount + @" (?:critical )?damage(?: and .+?)? on (?<tgt>.+?)(?: and caused .+?)?(?: by using (?<skill>.+?))?\.\s*$",
         Options);
 
     // "Protectorate Hunter received 300 damage due to the effect of Poison Arrow."
@@ -86,7 +94,7 @@ public static class LogParser
 
     // "Grop recovered 2,345 HP because Batte used Healing Light."
     static readonly Regex HealBecauseRx = new(
-        Prefix + @"(?<tgt>.+?) recovered " + Amount + @" HP because (?<src>.+?) used (?<skill>.+?)\.\s*$",
+        Prefix + @"(?<tgt>.+?) recovered " + Amount + @" HP because (?<src>.+?) used (?<skill>.+?)(?: on (?:you|[\p{L}\p{Nd}]+))?\.\s*$",
         Options);
 
     // "You recovered 2,345 HP by using Healing Light." (a self-heal or potion)
@@ -105,6 +113,33 @@ public static class LogParser
     static readonly Regex RestoredOfRx = new(
         Prefix + @".+? restored " + Amount + @" of (?<tgt>.+?)'s HP(?: by using (?<skill>.+?))?\.\s*$",
         Options);
+
+    // "Churry restored 4,300 HP." / "You recovered 1,130 HP." (potions, serums)
+    static readonly Regex PlainHealRx = new(
+        Prefix + @"(?<tgt>.+?) (?:restored|recovered) " + Amount + @" HP\.\s*$",
+        Options);
+
+    // "You inflicted continuous damage on Churry by using Erosion."
+    static readonly Regex ContinuousRx = new(
+        Prefix + @"(?<src>.+?) (?:has )?inflicted continuous damage on (?<tgt>.+?) by using (?<skill>.+?)\.\s*$",
+        Options);
+
+    // "Apexchild used Flame Cage to inflict the continuous damage effect on Ellvegas."
+    static readonly Regex InflictEffectRx = new(
+        Prefix + @"(?<src>.+?) used (?<skill>.+?) to inflict the continuous damage effect on (?<tgt>.+?)\.\s*$",
+        Options);
+
+    // "Troglodytes was affected by its own Enhance Magic Projectile."
+    static readonly Regex OwnEffectRx = new(
+        Prefix + @"(?<src>.+?) was affected by its own (?<skill>.+?)\.\s*$",
+        Options);
+
+    // "Lagoto fell down from shock because Zoooog used Wrathful Strike."
+    static readonly Regex BecauseUsedRx = new(
+        Prefix + @"(?<tgt>.+?) (?:is|has|fell|became|was|changed|entered)\b.*? because (?<src>.+?) used (?<skill>.+?)(?: on (?:you|[\p{L}\p{Nd}]+))?\.\s*$",
+        Options);
+
+    static readonly HashSet<string> Pronouns = new(StringComparer.OrdinalIgnoreCase) { "he", "she", "it", "they" };
 
     // "Weirdflexbutokay has defeated Lagoto."
     static readonly Regex DefeatedRx = new(
@@ -155,7 +190,7 @@ public static class LogParser
         if (line.Contains(" HP", StringComparison.Ordinal) && ParseHeal(line) is { } heal)
             return heal;
         if (!line.Contains(" damage", StringComparison.Ordinal))
-            return null;
+            return ParseSkillUse(line);
 
         var m = ReflectRx.Match(line);
         if (m.Success)
@@ -169,9 +204,11 @@ public static class LogParser
                 ? shielded with { Skill = "Absorbed by protection" }
                 : null;
 
+        // Gamez often prints "after you used" for other players' bleeds and poisons,
+        // so this is a tick whose owner the tracker looks up, with "you" only as a fallback.
         m = AfterUsedRx.Match(line);
         if (m.Success)
-            return Create(m, m.Groups["src"].Value, CombatEventKind.Hit);
+            return Create(m, m.Groups["src"].Value, CombatEventKind.DamageOverTime);
 
         m = HitRx.Match(line);
         if (m.Success)
@@ -185,6 +222,24 @@ public static class LogParser
         if (m.Success)
             return Create(m, m.Groups["src"].Value, CombatEventKind.Hit);
 
+        return ParseSkillUse(line);
+    }
+
+    static CombatEvent? ParseSkillUse(string line)
+    {
+        foreach (var rx in new[] { ContinuousRx, InflictEffectRx, OwnEffectRx, BecauseUsedRx })
+        {
+            var m = rx.Match(line);
+            if (!m.Success)
+                continue;
+            var src = m.Groups["src"].Value.Trim();
+            if (Pronouns.Contains(src) || !DateTime.TryParseExact(m.Groups["ts"].Value, "yyyy.MM.dd HH:mm:ss",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var time))
+                return null;
+            var target = m.Groups["tgt"].Success && rx != BecauseUsedRx ? NormalizeName(m.Groups["tgt"].Value) : "";
+            return new CombatEvent(time, NormalizeName(src), target, 0, false,
+                m.Groups["skill"].Value.Trim(), CombatEventKind.SkillUse);
+        }
         return null;
     }
 
@@ -209,6 +264,12 @@ public static class LogParser
         m = RestoredRx.Match(line);
         if (m.Success)
             return Create(m, m.Groups["src"].Value, CombatEventKind.Heal);
+
+        m = PlainHealRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["tgt"].Value, CombatEventKind.Heal) is { } potion
+                ? potion with { Skill = "Potion" }
+                : null;
 
         return null;
     }

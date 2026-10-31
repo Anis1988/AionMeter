@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -12,8 +13,11 @@ public partial class MainWindow : Window
 
     readonly MeterController controller;
     readonly FilterPanel filters;
+    readonly ObservableCollection<PickOption> targetOptions = [];
+    readonly ObservableCollection<PickOption> classOptions = [];
     DetailsWindow? details;
     double expandedWidth, expandedHeight;
+    bool updatingPicks;
 
     public MainWindow(MeterController controller)
     {
@@ -23,6 +27,9 @@ public partial class MainWindow : Window
         Bars.ItemsSource = controller.OverlayRows;
         filters = new FilterPanel(controller);
         FilterHost.Child = filters;
+        TargetBox.ItemsSource = targetOptions;
+        ClassPickBox.ItemsSource = classOptions;
+        BuildClassOptions();
         controller.Updated += UpdateTexts;
         RestorePlacement();
         UpdateTexts();
@@ -59,7 +66,7 @@ public partial class MainWindow : Window
         var enc = controller.Tracker.Current;
         var rows = controller.OverlayRows;
         var total = rows.Sum(r => r.Value);
-        var secs = enc.Seconds;
+        var secs = controller.ViewSeconds(enc);
         var perSecond = secs > 0 ? total / secs : 0;
         var healing = controller.Mode == MeterMode.Healing;
 
@@ -68,6 +75,8 @@ public partial class MainWindow : Window
         ModeButton.ToolTip = healing ? "Showing healing - click to show damage" : "Showing damage - click to show healing";
         EmptyText.Text = healing ? "No healing yet..." : "Waiting for combat...";
         EmptyText.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        TargetBox.IsEnabled = !healing;
+        UpdateTargetOptions();
         HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
         CubeText.Text = enc.IsEmpty ? "" : Format.Number(perSecond);
 
@@ -76,6 +85,70 @@ public partial class MainWindow : Window
             : healing
                 ? $"Healed {Format.Number(total)}  ·  HPS {Format.Number(perSecond)}"
                 : $"Total {Format.Number(total)}  ·  DPS {Format.Number(perSecond)}  ·  Taken {Format.Number(enc.DamageTaken)}";
+    }
+
+    void BuildClassOptions()
+    {
+        updatingPicks = true;
+        classOptions.Add(new PickOption("All classes", ClassIcons.Logo));
+        foreach (var cls in AionClassInfo.Playable)
+            classOptions.Add(new PickOption(cls.ToString(), ClassIcons.Get(cls)) { Class = cls });
+        ClassPickBox.SelectedIndex = 0;
+        updatingPicks = false;
+    }
+
+    /// <summary>Keeps the target list in step with the fight: everything players hit, most damaged first.</summary>
+    void UpdateTargetOptions()
+    {
+        if (TargetBox.IsDropDownOpen)
+            return;
+        var enc = controller.Tracker.Current;
+        var targets = enc.Targets.Take(40).ToList();
+        var known = targetOptions.Skip(1).Select(o => o.Key!).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        updatingPicks = true;
+        if (targetOptions.Count == 0 || known.Count != targets.Count || targets.Any(t => !known.Contains(t.Name)))
+        {
+            targetOptions.Clear();
+            targetOptions.Add(new PickOption("All targets", ClassIcons.Logo));
+            foreach (var t in targets)
+                targetOptions.Add(new PickOption("", null) { Key = t.Name });
+        }
+        foreach (var option in targetOptions.Skip(1))
+            DescribeTarget(option, enc);
+
+        var selected = targetOptions.FirstOrDefault(o =>
+            o.Key != null && string.Equals(o.Key, controller.TargetFilter, StringComparison.OrdinalIgnoreCase));
+        TargetBox.SelectedItem = selected ?? targetOptions[0];
+        if (selected == null && controller.TargetFilter != null)
+            controller.SetViewFilters(null, controller.ClassFilter);
+        if (controller.ClassFilter == null && ClassPickBox.SelectedIndex != 0)
+            ClassPickBox.SelectedIndex = 0;
+        updatingPicks = false;
+    }
+
+    void DescribeTarget(PickOption option, Encounter enc)
+    {
+        var name = option.Key!;
+        var boss = controller.Tracker.IsBoss(name);
+        var shown = name == LogParser.You && controller.Settings.CharacterName.Length > 0
+            ? controller.Settings.CharacterName
+            : name;
+        var damage = enc.Target(name)?.Damage ?? 0;
+        option.Label = $"{(boss ? "BOSS " : "")}{shown}  ·  {Format.Number(damage)}";
+        option.LabelBrush = boss ? ClassIcons.BossBrush : Brushes.White;
+        option.Icon = boss ? ClassIcons.Monster(true)
+            : CombatTracker.IsMonsterName(name) ? ClassIcons.Monster(false)
+            : ClassIcons.Get(enc.Combatants.GetValueOrDefault(name)?.Class ?? AionClass.Unknown);
+    }
+
+    void Pick_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (updatingPicks)
+            return;
+        controller.SetViewFilters(
+            (TargetBox.SelectedItem as PickOption)?.Key,
+            (ClassPickBox.SelectedItem as PickOption)?.Class);
     }
 
     void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -129,7 +202,10 @@ public partial class MainWindow : Window
 
     void Copy_Click(object sender, RoutedEventArgs e)
     {
-        if (Report.Copy(controller.Tracker.Current, controller.OverlayRows, controller.Settings.CopyCount))
+        var target = controller.TargetFilter == LogParser.You && controller.Settings.CharacterName.Length > 0
+            ? controller.Settings.CharacterName
+            : controller.TargetFilter;
+        if (Report.Copy(controller.Tracker.Current, controller.OverlayRows, controller.Settings.CopyCount, target))
             Flash("Copied to clipboard");
     }
 
@@ -159,7 +235,7 @@ public partial class MainWindow : Window
     {
         if (Collapsed)
         {
-            Body.Visibility = FooterBar.Visibility = Visibility.Visible;
+            Body.Visibility = FooterBar.Visibility = PickBar.Visibility = Visibility.Visible;
             ResizeMode = ResizeMode.CanResizeWithGrip;
             Height = expandedHeight;
             CollapseButton.Content = "";
@@ -168,7 +244,7 @@ public partial class MainWindow : Window
         else
         {
             expandedHeight = Height;
-            Body.Visibility = FooterBar.Visibility = Visibility.Collapsed;
+            Body.Visibility = FooterBar.Visibility = PickBar.Visibility = Visibility.Collapsed;
             ResizeMode = ResizeMode.NoResize;
             Height = CollapsedHeight;
             CollapseButton.Content = "";

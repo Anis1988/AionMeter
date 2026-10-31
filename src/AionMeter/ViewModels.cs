@@ -108,7 +108,8 @@ public sealed class CombatantRow(string key) : Observable
     public string PercentShort => $"{Percent * 100:0}%";
     public string Summary => $"{Format.Number(Value)}  ({Format.Number(PerSecond)}/s)  {Percent * 100:0}%";
 
-    public void Update(Combatant c, int rank, long total, long top, double seconds, MeterMode mode)
+    /// <param name="value">What this row ranks by: damage, healing, or damage on one target.</param>
+    public void Update(Combatant c, int rank, long value, long total, long top, double seconds)
     {
         Rank = rank;
         IsBoss = c.IsBoss;
@@ -120,7 +121,7 @@ public sealed class CombatantRow(string key) : Observable
         Dps = seconds > 0 ? c.Damage / seconds : 0;
         Healing = c.Healing;
         Hps = seconds > 0 ? c.Healing / seconds : 0;
-        Value = c.Total(mode);
+        Value = value;
         PerSecond = seconds > 0 ? Value / seconds : 0;
         Percent = total > 0 ? (double)Value / total : 0;
         BarFraction = top > 0 ? (double)Value / top : 0;
@@ -135,14 +136,16 @@ public sealed class CombatantRow(string key) : Observable
     }
 
     /// <summary>Updates <paramref name="rows"/> in place so selection and scrolling survive refreshes.</summary>
-    public static void Sync(ObservableCollection<CombatantRow> rows, IReadOnlyList<Combatant> ranked, Encounter enc,
-        MeterMode mode)
+    /// <param name="ranked">Combatants with the value they rank by, highest first.</param>
+    /// <param name="seconds">Fight time used for per-second numbers.</param>
+    public static void Sync(ObservableCollection<CombatantRow> rows, IReadOnlyList<(Combatant C, long Value)> ranked,
+        double seconds)
     {
-        var total = ranked.Sum(c => c.Total(mode));
-        var top = ranked.Count > 0 ? ranked.Max(c => c.Total(mode)) : 0;
+        var total = ranked.Sum(r => r.Value);
+        var top = ranked.Count > 0 ? ranked.Max(r => r.Value) : 0;
         for (var i = 0; i < ranked.Count; i++)
         {
-            var c = ranked[i];
+            var (c, value) = ranked[i];
             var index = -1;
             for (var j = i; j < rows.Count; j++)
                 if (rows[j].Key == c.Name) { index = j; break; }
@@ -151,7 +154,7 @@ public sealed class CombatantRow(string key) : Observable
                 rows.Insert(i, new CombatantRow(c.Name));
             else if (index != i)
                 rows.Move(index, i);
-            rows[i].Update(c, i + 1, total, top, enc.Seconds, mode);
+            rows[i].Update(c, i + 1, value, total, top, seconds);
         }
         while (rows.Count > ranked.Count)
             rows.RemoveAt(rows.Count - 1);
@@ -188,4 +191,22 @@ public sealed class SkillRow
                 MaxHit = s.MaxHit,
             })
             .ToList();
+}
+
+/// <summary>An entry in the target / class pickers on the meter.</summary>
+public sealed class PickOption(string label, ImageSource? icon) : Observable
+{
+    string label = label;
+    ImageSource? icon = icon;
+    Brush labelBrush = Brushes.White;
+
+    /// <summary>Target log name; null for "All targets".</summary>
+    public string? Key { get; init; }
+
+    /// <summary>Class to show; null for "All classes".</summary>
+    public AionClass? Class { get; init; }
+
+    public string Label { get => label; set => Set(ref label, value); }
+    public ImageSource? Icon { get => icon; set => Set(ref icon, value); }
+    public Brush LabelBrush { get => labelBrush; set => Set(ref labelBrush, value); }
 }

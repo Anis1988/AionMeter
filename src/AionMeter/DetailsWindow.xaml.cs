@@ -51,7 +51,7 @@ public partial class DetailsWindow : Window
         var enc = controller.Tracker.Current;
         var ranked = controller.Visible(enc);
         filters.Sync();
-        CombatantRow.Sync(rows, ranked, enc, mode);
+        CombatantRow.Sync(rows, ranked.Select(c => (c, c.Total(mode))).ToList(), enc.Seconds);
 
         var total = ranked.Sum(c => c.Total(mode));
         var secs = enc.Seconds;

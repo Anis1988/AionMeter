@@ -67,6 +67,22 @@
                         </Grid>
                     </Border>
 
+                    <!-- Pick a target and/or a class to rank -->
+                    <Grid x:Name="PickBar" DockPanel.Dock="Top" Margin="8,6,8,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="TargetBox" Style="{StaticResource DarkCombo}"
+                                  ItemTemplate="{StaticResource PickTemplate}"
+                                  ToolTip="Rank everyone's damage on one mob, boss or player"
+                                  SelectionChanged="Pick_SelectionChanged" />
+                        <ComboBox x:Name="ClassPickBox" Grid.Column="2" Style="{StaticResource DarkCombo}"
+                                  ItemTemplate="{StaticResource PickTemplate}"
+                                  ToolTip="Rank only one class" SelectionChanged="Pick_SelectionChanged" />
+                    </Grid>
+
                     <!-- Footer -->
                     <Border x:Name="FooterBar" DockPanel.Dock="Bottom" Height="26" Background="#0DFFFFFF"
                             BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0"

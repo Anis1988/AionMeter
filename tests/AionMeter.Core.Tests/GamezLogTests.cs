@@ -37,7 +37,9 @@ public class GamezLogTests
         Assert.Equal(3084, c["Lowest"].Damage);
         Assert.Equal(15 * 168, c["Lagoto"].Damage);
         Assert.Equal(1311, c["Schuka"].Damage);
-        Assert.Equal(26, c[LogParser.You].Damage);
+        // "Npcfox received 26 bleeding damage after you used Lifeline Penetration": a Gunner skill,
+        // so Gamez's "you" isn't you (a Spiritmaster).
+        Assert.Equal(0, c[LogParser.You].Damage);
         Assert.DoesNotContain(c.Keys, k => k.Contains("reflecting") || k.Contains("Protector"));
     }
 

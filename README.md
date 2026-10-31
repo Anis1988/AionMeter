@@ -15,6 +15,7 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 - DoT ticks credited to whoever applied them; summons (spirits, servants, traps) are added to their owner's damage instead of showing up as players
 - Damage taken, pause and reset
 - Filter by class, monsters and bosses
+- Two dropdowns on the meter: pick a mob, boss or player to rank everyone's damage on just that target (with its own DPS time), and pick a class to rank just that class
 - Bosses are detected automatically and shown in red with **BOSS** in front of the name
 - Shrink the whole meter into a tiny cube and click it to bring it back
 

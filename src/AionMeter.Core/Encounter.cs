@@ -37,6 +37,11 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
     public long MaxHit { get; private set; }
     public Dictionary<string, SkillStats> Skills { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Damage done to each target.</summary>
+    public Dictionary<string, long> DamageByTarget { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public long DamageOn(string target) => DamageByTarget.GetValueOrDefault(target);
+
     public long Healing { get; private set; }
     public int HealHits { get; private set; }
     public int HealCrits { get; private set; }
@@ -56,8 +61,10 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
     public AionClass DetectedClass =>
         votes.Count == 0 ? AionClass.Unknown : votes.MaxBy(v => v.Value).Key;
 
-    internal void Add(string skill, long amount, bool critical)
+    internal void Add(string skill, long amount, bool critical, string? target = null)
     {
+        if (target != null)
+            DamageByTarget[target] = DamageByTarget.GetValueOrDefault(target) + amount;
         Damage += amount;
         Hits++;
         if (critical) Crits++;
@@ -85,13 +92,39 @@ public sealed class Combatant(string name, string displayName, bool isYou, bool 
     }
 }
 
+/// <summary>Damage taken by one target, with its own fight time.</summary>
+public sealed class TargetStats(string name)
+{
+    double activeSeconds;
+
+    public string Name { get; } = name;
+    public long Damage { get; private set; }
+    public DateTime? End { get; private set; }
+
+    /// <summary>Time this target was being hit, in seconds (at least 1).</summary>
+    public double Seconds => Math.Max(1, activeSeconds);
+
+    internal void Add(long amount, DateTime time)
+    {
+        Damage += amount;
+        if (End is { } end)
+        {
+            var gap = (time - end).TotalSeconds;
+            if (gap > 0 && gap <= Encounter.CombatGapSeconds)
+                activeSeconds += gap;
+        }
+        if (End == null || time > End)
+            End = time;
+    }
+}
+
 /// <summary>All damage since the last reset.</summary>
 public sealed class Encounter
 {
     /// <summary>Longer pauses than this don't count as combat time, so DPS doesn't drop while idle.</summary>
     public const double CombatGapSeconds = 15;
 
-    readonly Dictionary<string, long> targets = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<string, TargetStats> targets = new(StringComparer.OrdinalIgnoreCase);
     double activeSeconds;
 
     public DateTime? Start { get; private set; }
@@ -103,7 +136,12 @@ public sealed class Encounter
     public double Seconds => Start == null ? 0 : Math.Max(1, activeSeconds);
 
     /// <summary>The target that took the most damage from players.</summary>
-    public string? MainTarget => targets.Count == 0 ? null : targets.MaxBy(t => t.Value).Key;
+    public string? MainTarget => targets.Count == 0 ? null : targets.Values.MaxBy(t => t.Damage)!.Name;
+
+    /// <summary>Everything players damaged, most damaged first.</summary>
+    public IReadOnlyList<TargetStats> Targets => targets.Values.OrderByDescending(t => t.Damage).ToList();
+
+    public TargetStats? Target(string name) => targets.GetValueOrDefault(name);
 
     public bool IsEmpty => Combatants.Count == 0;
 
@@ -128,6 +166,10 @@ public sealed class Encounter
             .ThenBy(c => c.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    internal void AddTargetDamage(string target, long amount) =>
-        targets[target] = targets.GetValueOrDefault(target) + amount;
+    internal void AddTargetDamage(string target, long amount, DateTime time)
+    {
+        if (!targets.TryGetValue(target, out var t))
+            targets[target] = t = new TargetStats(target);
+        t.Add(amount, time);
+    }
 }

@@ -139,8 +139,19 @@ public class LogParserTests
         Assert.Equal("Protectorate Searcher", e.Target);
     }
 
+    [Fact]
+    public void ParsesSkillUseFromBecauseLine()
+    {
+        var e = LogParser.Parse("2026.10.28 17:02:10 : Critical Strike!Protectorate Hunter's attack speed has decreased because Grop used Dazing Severe Blow.");
+
+        Assert.NotNull(e);
+        Assert.Equal(CombatEventKind.SkillUse, e.Kind);
+        Assert.Equal("Grop", e.Source);
+        Assert.Equal("Dazing Severe Blow", e.Skill);
+        Assert.Equal(0, e.Amount);
+    }
+
     [Theory]
-    [InlineData("2026.10.28 17:02:10 : Critical Strike!Protectorate Hunter's attack speed has decreased because Grop used Dazing Severe Blow.")]
     [InlineData("2026.10.28 17:03:31 : You have earned 520 Kinah.")]
     [InlineData("")]
     public void IgnoresNonDamageLines(string line) => Assert.Null(LogParser.Parse(line));

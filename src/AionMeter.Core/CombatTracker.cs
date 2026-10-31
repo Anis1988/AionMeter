@@ -69,6 +69,12 @@ public sealed class CombatTracker
         if (e.Kind == CombatEventKind.Summon)
         {
             summonOwners[e.Target] = e.Source;
+            ProcessSkillUse(e with { Target = "" });
+            return;
+        }
+        if (e.Kind == CombatEventKind.SkillUse)
+        {
+            ProcessSkillUse(e);
             return;
         }
         if (e.Kind == CombatEventKind.Kill)
@@ -102,13 +108,14 @@ public sealed class CombatTracker
 
         if (e.Kind == CombatEventKind.DamageOverTime)
         {
-            owner = FindOwner(dotOwners, lastSkillUser, e.Target, skill);
+            // Some ticks name a source ("after you used"), but Gamez gets it wrong for other
+            // players' bleeds and poisons, so whoever was seen using the skill wins.
+            owner = FindOwner(dotOwners, lastSkillUser, e.Target, skill) ?? TickSource(e.Source, skill);
             learnable = false;
         }
         else if (skill != null)
         {
-            dotOwners[(e.Target, skill)] = owner;
-            lastSkillUser[skill] = owner;
+            RememberSkillUser(e.Target, skill, owner);
         }
 
         if (IsYou(e.Target))
@@ -146,12 +153,12 @@ public sealed class CombatTracker
         Current.Advance(e.Time);
         var hint = learnable ? Detector.Lookup(skill) : AionClass.Unknown;
         var c = GetOrAdd(Current, owner);
-        c.Add(skill ?? "Auto-attack", e.Amount, e.Critical);
+        c.Add(skill ?? "Auto-attack", e.Amount, e.Critical, IsYou(e.Target) ? LogParser.You : e.Target);
         c.Vote(hint);
         c.Class = ResolveClass(c);
         if (!c.IsMonster)
         {
-            Current.AddTargetDamage(e.Target, e.Amount);
+            Current.AddTargetDamage(IsYou(e.Target) ? LogParser.You : e.Target, e.Amount, e.Time);
             TrackBossDamage(e.Target, e.Amount);
         }
 
@@ -178,8 +185,8 @@ public sealed class CombatTracker
         }
         else if (skill != null)
         {
-            hotOwners[(e.Target, skill)] = healer;
-            lastHealer[skill] = healer;
+            hotOwners[(e.Target, SkillKey(skill))] = healer;
+            lastHealer[SkillKey(skill)] = healer;
         }
 
         // Healing your summon (spirit armour etc.) counts as yours.
@@ -319,14 +326,72 @@ public sealed class CombatTracker
         return c;
     }
 
+    /// <summary>A skill used without a damage number: remember who owns its ticks, and learn their class.</summary>
+    void ProcessSkillUse(CombatEvent e)
+    {
+        if (e.Skill == null || e.Source.Length == 0)
+            return;
+        var user = IsYou(e.Source) ? LogParser.You : e.Source;
+        RememberSkillUser(e.Target, e.Skill, user);
+
+        if (IsMonsterName(user) || ClassDetector.SummonClass(user) != AionClass.Unknown)
+            return;
+        var cls = Detector.Lookup(e.Skill);
+        if (cls == AionClass.Unknown)
+            return;
+        var c = GetOrAdd(Current, user);
+        c.Vote(cls);
+        c.Class = ResolveClass(c);
+        Version++;
+    }
+
+    /// <summary>The source a tick names, if believable. A "you" is only trusted for your own class's skills.</summary>
+    string? TickSource(string source, string? skill)
+    {
+        if (string.IsNullOrEmpty(source))
+            return null;
+        if (!IsYou(source))
+            return source;
+        var cls = skill == null ? AionClass.Unknown : Detector.Lookup(SkillKey(skill));
+        var yours = ClassOf(LogParser.You);
+        return cls == AionClass.Unknown || cls == yours ? LogParser.You : null;
+    }
+
+    void RememberSkillUser(string target, string skill, string user)
+    {
+        var key = SkillKey(skill);
+        if (target.Length > 0)
+            dotOwners[(target, key)] = user;
+        lastSkillUser[key] = user;
+    }
+
+    /// <summary>
+    /// Matches a tick's effect name to the skill that caused it:
+    /// "Effect Enhance Magic Projectile" and "Apply Deadly Poison Poisoning Effect" → the skill.
+    /// </summary>
+    static string SkillKey(string skill)
+    {
+        var s = skill.Trim();
+        if (s.StartsWith("Effect ", StringComparison.OrdinalIgnoreCase))
+            s = s[7..];
+        foreach (var suffix in new[] { " Poisoning Effect", " Bleeding Effect", " Effect" })
+            if (s.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                s = s[..^suffix.Length];
+                break;
+            }
+        return ClassDetector.Normalize(s);
+    }
+
     static string? FindOwner(Dictionary<(string, string), string> byTarget,
         Dictionary<string, string> bySkill, string target, string? skill)
     {
         if (skill == null)
             return null;
-        if (byTarget.TryGetValue((target, skill), out var owner))
+        var key = SkillKey(skill);
+        if (byTarget.TryGetValue((target, key), out var owner))
             return owner;
-        return bySkill.GetValueOrDefault(skill);
+        return bySkill.GetValueOrDefault(key);
     }
 
     /// <summary>
