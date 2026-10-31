@@ -12,6 +12,13 @@ public sealed class MeterController
     int shownVersion = -1;
     Encounter? shownEncounter;
     DateTime lastSave = DateTime.UtcNow;
+    readonly HashSet<string> unreadSeen = new(StringComparer.Ordinal);
+
+    /// <summary>Damage/heal lines the meter couldn't read are saved here, so they can be sent in and fixed.</summary>
+    public static readonly string UnreadFile = Path.Combine(Settings.Folder, "unread-lines.log");
+
+    /// <summary>How many different unread damage/heal lines were seen this run.</summary>
+    public int UnreadCount => unreadSeen.Count;
 
     public MeterController(Settings settings)
     {
@@ -175,8 +182,12 @@ public sealed class MeterController
             var lines = reader!.ReadNewLines();
             if (!Paused)
                 foreach (var line in lines)
+                {
                     if (LogParser.Parse(line) is { } e)
                         Tracker.Process(e);
+                    else if (LogParser.HasCombatNumber(line))
+                        SaveUnread(line);
+                }
             status = !reader.Exists
                 ? "Chat.log not found - check the game folder in settings"
                 : Paused ? "Paused" : "";
@@ -196,6 +207,25 @@ public sealed class MeterController
         }
 
         Refresh(force: statusChanged);
+    }
+
+    /// <summary>Keeps one copy of each unread line (ignoring its timestamp and numbers) in <see cref="UnreadFile"/>.</summary>
+    void SaveUnread(string line)
+    {
+        var text = line.Length > 22 ? line[22..] : line;
+        var shape = System.Text.RegularExpressions.Regex.Replace(text, @"\d[\d,]*", "#");
+        if (unreadSeen.Count >= 500 || !unreadSeen.Add(shape))
+            return;
+        try
+        {
+            Directory.CreateDirectory(Settings.Folder);
+            File.AppendAllText(UnreadFile, line.TrimEnd() + Environment.NewLine);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Reporting is best-effort; the meter keeps running.
+        }
+        Refresh(force: true);
     }
 
     void Refresh(bool force)

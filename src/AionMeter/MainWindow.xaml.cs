@@ -80,11 +80,13 @@ public partial class MainWindow : Window
         HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
         CubeText.Text = enc.IsEmpty ? "" : Format.Number(perSecond);
 
+        var unread = controller.UnreadCount > 0 ? $"  ·  ⚠ {controller.UnreadCount} unread" : "";
         Footer.Text = controller.Status.Length > 0
             ? controller.Status
-            : healing
+            : (healing
                 ? $"Healed {Format.Number(total)}  ·  HPS {Format.Number(perSecond)}"
-                : $"Total {Format.Number(total)}  ·  DPS {Format.Number(perSecond)}  ·  Taken {Format.Number(enc.DamageTaken)}";
+                : $"Total {Format.Number(total)}  ·  DPS {Format.Number(perSecond)}  ·  Taken {Format.Number(enc.DamageTaken)}")
+              + unread;
     }
 
     void BuildClassOptions()

@@ -29,6 +29,7 @@ public partial class SettingsWindow : Window
         SummonsBox.IsChecked = settings.MergeSummons;
         ClearLogBox.IsChecked = settings.ClearChatLogOnStart;
         ShowLogSize();
+        UnreadText.Text = controller.UnreadCount == 0 ? "None so far" : $"{controller.UnreadCount} this session";
 
         GamePathBox.TextChanged += (_, _) => CheckPath();
         CheckPath();
@@ -58,6 +59,18 @@ public partial class SettingsWindow : Window
         var message = controller.ClearChatLog();
         ShowLogSize();
         LogSizeText.Text = message;
+    }
+
+    void OpenUnread_Click(object sender, RoutedEventArgs e)
+    {
+        var file = MeterController.UnreadFile;
+        if (!File.Exists(file))
+        {
+            UnreadText.Text = "Nothing unread yet";
+            return;
+        }
+        // Show the file selected in Explorer so it's easy to attach or upload.
+        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file}\"");
     }
 
     void Browse_Click(object sender, RoutedEventArgs e)

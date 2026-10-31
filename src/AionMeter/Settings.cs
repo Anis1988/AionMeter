@@ -6,7 +6,7 @@ namespace AionMeter;
 
 public sealed class Settings
 {
-    static readonly string Folder = Path.Combine(
+    public static readonly string Folder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AionMeter");
     static readonly string FilePath = Path.Combine(Folder, "settings.json");
 

@@ -53,6 +53,13 @@
             <TextBlock x:Name="LogSizeText" Margin="10,0,0,0" VerticalAlignment="Center"
                        Foreground="{StaticResource MutedBrush}" />
         </StackPanel>
+        <TextBlock Text="Lines the meter couldn't read (send this file in so they can be added)" Margin="0,0,0,4" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Open unread lines" Style="{StaticResource DarkButton}" Padding="10,4"
+                    Click="OpenUnread_Click" />
+            <TextBlock x:Name="UnreadText" Margin="10,0,0,0" VerticalAlignment="Center"
+                       Foreground="{StaticResource MutedBrush}" />
+        </StackPanel>
         <CheckBox x:Name="SummonsBox" Content="Count my summons (spirits, servants) as my damage"
                   Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
 

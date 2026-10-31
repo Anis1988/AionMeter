@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using AionMeter.Core;
 
 namespace AionMeter.Core.Tests;
@@ -26,8 +25,7 @@ public class GamezFullLogTests
     [Fact]
     public void EveryDamageAndHealLineIsRead()
     {
-        var amount = new Regex(@"\d[\d,]* (?:[a-z]+ )?damage|\d[\d,]* HP|'s HP");
-        Assert.Empty(Lines.Where(l => amount.IsMatch(l) && LogParser.Parse(l) == null));
+        Assert.DoesNotContain(Lines, l => LogParser.HasCombatNumber(l) && LogParser.Parse(l) == null);
     }
 
     [Theory]

@@ -161,6 +161,14 @@ public static class LogParser
         Prefix + @"(?<src>.+?) (?:have |has )?summoned (?:an? |the )?(?<tgt>.+?)(?: by using (?<skill>.+?))?\.\s*$",
         Options);
 
+    static readonly Regex CombatNumberRx = new(@"\d[\d,]* (?:[a-z]+ )?damage|\d[\d,]* HP|'s HP", Options);
+
+    /// <summary>
+    /// True for lines that carry a damage or HP number. If <see cref="Parse"/> returns null for one
+    /// of these, the meter is missing something and the line is worth reporting.
+    /// </summary>
+    public static bool HasCombatNumber(string line) => CombatNumberRx.IsMatch(line);
+
     public static CombatEvent? Parse(string line)
     {
         if (string.IsNullOrEmpty(line))

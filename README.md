@@ -71,6 +71,12 @@ The meter draws its own vector class emblems. To use other icons (for example th
 put PNG files named after the class (`Spiritmaster.png`, `Sorcerer.png`, …, plus `Monster.png` and
 `Boss.png`) in the `Icons` folder next to `AionMeter.exe`.
 
+## Unread lines
+
+The meter checks every line as you play. If a line has a damage or HP number but the meter can't
+read it, it saves one copy to `%AppData%\AionMeter\unread-lines.log` and shows **⚠ N unread** at the
+bottom of the meter. Settings → **Open unread lines** shows the file; send it in so those lines can be added.
+
 ## Limitations
 
 - Healing is read from lines like `Grop recovered 2,345 HP because Lumi used Healing Light.` If your server words heals differently, they won't show up yet.
