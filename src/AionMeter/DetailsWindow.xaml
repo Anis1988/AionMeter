@@ -28,7 +28,7 @@
         </Grid>
 
         <TextBlock DockPanel.Dock="Bottom" FontFamily="{StaticResource UiFont}" Margin="0,6,0,0" Foreground="{StaticResource MutedBrush}"
-                   Text="Tip: right-click a player to set their class, or a monster to mark it as a boss. Click a column header to sort." />
+                   Text="Tip: right-click a player to set their class (or mark a boss that shows up as a player). Monsters are only in the target dropdown on the meter." />
 
         <Grid>
             <Grid.RowDefinitions>

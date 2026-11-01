@@ -6,7 +6,7 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 ## Features
 
 - Always-on-top overlay that ranks everyone by damage: highest on top, then second, third…
-- Shows allies and enemy players near you, plus monsters if you turn them on
+- Shows allies and enemy players near you; monsters and bosses are never in the list, only in the target dropdown
 - Class icon and colour for each player (Gladiator, Templar, Assassin, Ranger, Sorcerer, Spiritmaster, Cleric, Chanter, Gunner, Songweaver, Aethertech)
 - Click the overlay to open the full list: damage, DPS, %, hits, crit rate and max hit, with a per-skill breakdown for whoever you select
 - Keeps adding up until you press Reset (idle time doesn't lower your DPS)
@@ -14,7 +14,7 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 - Healing meter: switch between damage and healing with one click (heals over time credited to the caster)
 - DoT ticks credited to whoever applied them; summons (spirits, servants, traps) are added to their owner's damage instead of showing up as players
 - Damage taken, pause and reset
-- Filter by class, monsters and bosses
+- Filter by class
 - Two dropdowns on the meter: pick a mob, boss or player to rank everyone's damage on just that target (with its own DPS time), and pick a class to rank just that class
 - Bosses are detected automatically and shown in red with **BOSS** in front of the name
 - Shrink the whole meter into a tiny cube and click it to bring it back
@@ -42,7 +42,7 @@ Aion Meter empties `Chat.log` each time it starts (like ARM), so the log never g
 | ⟳ | Reset: clear everything and start over |
 | ☰ | Full list (same as clicking the overlay) |
 | ⚙ | Settings |
-| Filter | Show or hide each class, monsters and bosses |
+| Filter | Show or hide each class |
 | ⌃ | Collapse to just the title bar (click again to expand) |
 | Cube | Shrink everything into a tiny cube; click the cube to restore it, drag it to move it |
 
@@ -62,8 +62,9 @@ Players who only auto-attack show a grey `?` icon until they use a known skill.
 ## Bosses
 
 A monster that takes more than 1,500,000 damage in one life (between kills) is treated as a boss:
-its bar turns red and its name gets **BOSS** in front. Change the amount in settings, or right-click
-a monster in the full list and choose **Mark as boss** (remembered between sessions).
+in the target dropdown it's red with **BOSS** in front, and **Copy** puts it first. Change the amount
+in settings. A boss with a one-word name can look like a player; right-click it in the full list and
+choose **Mark as boss** (remembered between sessions).
 
 ## Custom icons
 

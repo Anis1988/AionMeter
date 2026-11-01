@@ -46,7 +46,7 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,5,0"
                                         VerticalAlignment="Center">
                                 <Button x:Name="FilterButton" Style="{StaticResource IconButton}" Content="&#xE71C;"
-                                        ToolTip="Filter classes, monsters and bosses" Click="Filter_Click" />
+                                        ToolTip="Show or hide classes" Click="Filter_Click" />
                                 <Button x:Name="PauseButton" Style="{StaticResource IconButton}" Content="&#xE769;"
                                         ToolTip="Pause" Click="Pause_Click" />
                                 <Button Style="{StaticResource IconButton}" Content="&#xE8C8;"

@@ -25,7 +25,6 @@ public partial class SettingsWindow : Window
         CopyCountBox.Text = settings.CopyCount.ToString();
         BossBox.Text = settings.BossDamageThreshold.ToString("N0");
         OpacitySlider.Value = settings.Opacity;
-        MonstersBox.IsChecked = settings.ShowMonsters;
         SummonsBox.IsChecked = settings.MergeSummons;
         ClearLogBox.IsChecked = settings.ClearChatLogOnStart;
         AutoReportBox.IsChecked = settings.AutoReport;
@@ -122,7 +121,6 @@ public partial class SettingsWindow : Window
         settings.YourClass = (AionClass)Math.Max(0, ClassBox.SelectedIndex);
         settings.CopyCount = copyCount;
         settings.Opacity = OpacitySlider.Value;
-        settings.ShowMonsters = MonstersBox.IsChecked == true;
         settings.MergeSummons = SummonsBox.IsChecked == true;
         settings.ClearChatLogOnStart = ClearLogBox.IsChecked == true;
         SaveReportFields();

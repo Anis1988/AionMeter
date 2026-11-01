@@ -41,9 +41,9 @@ public static class AionClassInfo
     /// <summary>Bar/icon colour as #RRGGBB.</summary>
     public static string Color(AionClass c) => c switch
     {
-        AionClass.Gladiator => "#22C55E",
-        AionClass.Templar => "#3B82F6",
-        AionClass.Assassin => "#A855F7",
+        AionClass.Gladiator => "#60A5FA",
+        AionClass.Templar => "#2563EB",
+        AionClass.Assassin => "#22C55E",
         AionClass.Ranger => "#14B8A6",
         AionClass.Sorcerer => "#F97316",
         AionClass.Spiritmaster => "#6366F1",

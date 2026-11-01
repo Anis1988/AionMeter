@@ -180,11 +180,11 @@ public sealed class MeterController
         Refresh(force: true);
     }
 
-    /// <summary>Whether a combatant passes the class/monster/boss filters.</summary>
-    public bool IsVisible(Combatant c) =>
-        c.IsBoss ? Settings.ShowBosses
-        : c.IsMonster ? Settings.ShowMonsters
-        : !Settings.HiddenClasses.Contains(c.Class);
+    /// <summary>
+    /// Whether a combatant is listed: players only (monsters and bosses are never ranked; they
+    /// only appear as targets in the dropdown), minus any class hidden by the filter.
+    /// </summary>
+    public bool IsVisible(Combatant c) => !c.IsMonster && !Settings.HiddenClasses.Contains(c.Class);
 
     /// <summary>Filtered ranking for the current mode.</summary>
     public IReadOnlyList<Combatant> Visible(Encounter enc) =>

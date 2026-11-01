@@ -5,12 +5,11 @@ using AionMeter.Core;
 
 namespace AionMeter;
 
-/// <summary>Toggle buttons that show/hide each class, monsters and bosses.</summary>
+/// <summary>Toggle buttons that show/hide each class.</summary>
 public sealed class FilterPanel : WrapPanel
 {
     readonly MeterController controller;
     readonly Dictionary<AionClass, ToggleButton> classToggles = [];
-    readonly ToggleButton monsterToggle, bossToggle;
 
     public FilterPanel(MeterController controller)
     {
@@ -27,8 +26,6 @@ public sealed class FilterPanel : WrapPanel
             });
             classToggles[cls] = toggle;
         }
-        monsterToggle = Toggle(ClassIcons.Monster(false), "Monsters", settings.ShowMonsters, on => settings.ShowMonsters = on);
-        bossToggle = Toggle(ClassIcons.Monster(true), "Bosses", settings.ShowBosses, on => settings.ShowBosses = on);
 
         var all = new Button
         {
@@ -53,8 +50,6 @@ public sealed class FilterPanel : WrapPanel
         var s = controller.Settings;
         foreach (var (cls, toggle) in classToggles)
             toggle.IsChecked = !s.HiddenClasses.Contains(cls);
-        monsterToggle.IsChecked = s.ShowMonsters;
-        bossToggle.IsChecked = s.ShowBosses;
     }
 
     ToggleButton Toggle(System.Windows.Media.ImageSource icon, string label, bool on, Action<bool> apply)
