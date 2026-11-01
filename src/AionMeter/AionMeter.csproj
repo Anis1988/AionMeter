@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <None Include="Icons\README.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Icons\*.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
