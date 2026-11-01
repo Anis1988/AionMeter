@@ -12,6 +12,7 @@
     <Version>1.0.0</Version>
     <Product>Aion Meter</Product>
     <Description>Chat.log based DPS meter for Aion 4.8</Description>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +25,10 @@
 
   <ItemGroup>
     <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
   </ItemGroup>
 
   <ItemGroup>
