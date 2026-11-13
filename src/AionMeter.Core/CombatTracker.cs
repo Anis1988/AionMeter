@@ -34,6 +34,9 @@ public sealed class CombatTracker
     readonly HashSet<string> detectedBosses = new(StringComparer.OrdinalIgnoreCase);
     readonly Dictionary<string, string> summonOwners = new(StringComparer.OrdinalIgnoreCase);
 
+    // Damage a protector soaked up for someone when the log didn't name the attacker, by protected target.
+    readonly Dictionary<string, (long Amount, DateTime Time)> absorbedFor = new(StringComparer.OrdinalIgnoreCase);
+
     public CombatTracker(TrackerOptions? options = null, ClassDetector? detector = null,
         IEnumerable<KeyValuePair<string, AionClass>>? classOverrides = null)
     {
@@ -82,6 +85,23 @@ public sealed class CombatTracker
             // It died, so the next one with this name starts from zero.
             damageThisLife.Remove(e.Target);
             return;
+        }
+        if (e.Kind == CombatEventKind.Hit && e.Source.Length == 0)
+        {
+            // "Ypinos received 184 damage inflicted on Hellmerryx, because of the protection effect":
+            // the attacker's own line comes next with 0 damage, so keep the amount until then.
+            if (e.Amount > 0)
+            {
+                var waiting = absorbedFor.TryGetValue(e.Target, out var a) && IsSameMoment(a.Time, e.Time) ? a.Amount : 0;
+                absorbedFor[e.Target] = (waiting + e.Amount, e.Time);
+            }
+            return;
+        }
+        if (e.Kind == CombatEventKind.Hit && e.Amount == 0 && e.Skill != LogParser.AbsorbedSkill
+            && absorbedFor.Remove(e.Target, out var soaked) && IsSameMoment(soaked.Time, e.Time))
+        {
+            // This is the hit the protector soaked up: give its damage to the attacker.
+            e = e with { Amount = soaked.Amount };
         }
         if (e.Amount <= 0)
         {
@@ -171,6 +191,8 @@ public sealed class CombatTracker
 
         Version++;
     }
+
+    static bool IsSameMoment(DateTime a, DateTime b) => (b - a).Duration() <= TimeSpan.FromSeconds(1);
 
     void ProcessHeal(CombatEvent e)
     {
@@ -262,6 +284,7 @@ public sealed class CombatTracker
         damageThisLife.Clear();
         detectedBosses.Clear();
         summonOwners.Clear();
+        absorbedFor.Clear();
         dotOwners.Clear();
         lastSkillUser.Clear();
         hotOwners.Clear();

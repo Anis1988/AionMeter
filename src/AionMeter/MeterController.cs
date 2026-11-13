@@ -236,7 +236,7 @@ public sealed class MeterController
     /// <summary>Keeps one copy of each unread line (ignoring its timestamp and numbers) in <see cref="UnreadFile"/>.</summary>
     void SaveUnread(string line)
     {
-        var text = line.Length > 22 ? line[22..] : line;
+        var text = LogParser.Body(line);
         var shape = System.Text.RegularExpressions.Regex.Replace(text, @"\d[\d,]*", "#");
         if (unreadSeen.Count >= 500 || !unreadSeen.Add(shape))
             return;

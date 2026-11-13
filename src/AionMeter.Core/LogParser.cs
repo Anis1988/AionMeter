@@ -69,6 +69,29 @@ public static class LogParser
         Prefix + @".+? received " + Amount + @" damage inflicted on (?<tgt>.+?) by (?<src>.+?), because of the protection effect.*$",
         Options);
 
+    // "Ypinos received 184 damage inflicted on Hellmerryx, because of the protection effect cast on it."
+    // No attacker is named; the attacker's own line follows with 0 damage, and the tracker joins the two.
+    static readonly Regex ProtectedNoSourceRx = new(
+        Prefix + @".+? received " + Amount + @" damage inflicted on (?<tgt>.+?), because of the protection effect.*$",
+        Options);
+
+    // "You received the 842,150,656 damage inflicted on Godkiller by Pawlpaw, because of the protection effect you cast on it."
+    // Gamez prints a meaningless number here (0, or about 842 million), so the line is read but nothing is counted.
+    static readonly Regex ProtectedByYouRx = new(
+        Prefix + @".+? received the " + Amount + @" damage inflicted on (?<tgt>.+?) by (?<src>.+?), because of the protection effect.*$",
+        Options);
+
+    /// <summary>Skill name given to damage that someone's protection soaked up.</summary>
+    public const string AbsorbedSkill = "Absorbed by protection";
+
+    // Protection lines sometimes carry garbage numbers in the millions; no real hit is this big.
+    const long MaxAbsorbed = 1_000_000;
+
+    // "You suffered 1,298 damage and lost some of your magical buffs because Keres used Magic Implosion on you."
+    static readonly Regex SufferedRx = new(
+        Prefix + @"(?<tgt>.+?) suffered " + Amount + @" damage(?: and .+?)? because (?<src>.+?) used (?<skill>.+?)(?: on (?:you|[\p{L}\p{Nd}]+))?\.\s*$",
+        Options);
+
     // "Npcfox received 26 bleeding damage after you used Lifeline Penetration."
     static readonly Regex AfterUsedRx = new(
         Prefix + @"(?<tgt>.+?) received " + Amount + @" (?:[a-z]+ )?damage after (?<src>.+?) used (?<skill>.+?)\.\s*$",
@@ -84,8 +107,9 @@ public static class LogParser
         Options);
 
     // "Protectorate Hunter received 300 damage due to the effect of Poison Arrow."
+    // "You receive 219 damage due to Effect Enhance Magic Projectile." / "You received 2,947 damage due to Big Magma Eruption."
     static readonly Regex DotRx = new(
-        Prefix + @"(?<tgt>.+?) received " + Amount + @" (?:[a-z]+ )?damage due to the effect of (?<skill>.+?)\.\s*$",
+        Prefix + @"(?<tgt>.+?) received? " + Amount + @" (?:[a-z]+ )?damage due to (?:the effect of )?(?<skill>.+?)\.\s*$",
         Options);
 
     // "Protectorate Hunter received 300 damage from Grop."
@@ -135,6 +159,22 @@ public static class LogParser
         Prefix + @"(?<src>.+?) was affected by its own (?<skill>.+?)\.\s*$",
         Options);
 
+    // "Keres absorbs Mariadopvp's HP by using Large-Scale Absorption." / "You start to absorb Roaring Kamar's HP by using ..."
+    // The drained HP itself comes in separate damage lines.
+    static readonly Regex AbsorbRx = new(
+        Prefix + @"(?<src>.+?) (?:absorbs|absorbed|starts? to absorb) (?<tgt>.+?)'s HP by using (?<skill>.+?)\.\s*$",
+        Options);
+
+    // "Gaewalin has boosted Batte's HP by using Life-Saving Splendour." (a buff, not a heal)
+    static readonly Regex BoostedHpRx = new(
+        Prefix + @"(?<src>.+?) (?:has |have )?boosted .+? HP by using (?<skill>.+?)\.\s*$",
+        Options);
+
+    // "Guardian General of Illusion received 0 damage as it used Offering Incantation." (it hurt itself)
+    static readonly Regex SelfDamageRx = new(
+        Prefix + @"(?<src>.+?) received " + Amount + @" damage as (?:it|he|she|you|they) used (?<skill>.+?)\.\s*$",
+        Options);
+
     // "Lagoto fell down from shock because Zoooog used Wrathful Strike."
     static readonly Regex BecauseUsedRx = new(
         Prefix + @"(?<tgt>.+?) (?:is|has|fell|became|was|changed|entered)\b.*? because (?<src>.+?) used (?<skill>.+?)(?: on (?:you|[\p{L}\p{Nd}]+))?\.\s*$",
@@ -169,6 +209,13 @@ public static class LogParser
     /// of these, the meter is missing something and the line is worth reporting.
     /// </summary>
     public static bool HasCombatNumber(string line) => CombatNumberRx.IsMatch(line);
+
+    /// <summary>The line without its timestamp (which may or may not have milliseconds).</summary>
+    public static string Body(string line)
+    {
+        var i = line.IndexOf(" : ", StringComparison.Ordinal);
+        return i is >= 19 and <= 30 ? line[(i + 3)..] : line;
+    }
 
     public static CombatEvent? Parse(string line)
     {
@@ -207,11 +254,23 @@ public static class LogParser
                 ? reflect with { Skill = "Reflect" }
                 : null;
 
+        m = ProtectedByYouRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["src"].Value, CombatEventKind.Hit) is { } garbled
+                ? garbled with { Amount = 0, Skill = AbsorbedSkill }
+                : null;
+
         m = ProtectedRx.Match(line);
+        if (!m.Success)
+            m = ProtectedNoSourceRx.Match(line);
         if (m.Success)
             return Create(m, m.Groups["src"].Value, CombatEventKind.Hit) is { } shielded
-                ? shielded with { Skill = "Absorbed by protection" }
+                ? shielded with { Amount = shielded.Amount > MaxAbsorbed ? 0 : shielded.Amount, Skill = AbsorbedSkill }
                 : null;
+
+        m = SufferedRx.Match(line);
+        if (m.Success)
+            return Create(m, m.Groups["src"].Value, CombatEventKind.Hit);
 
         // Gamez often prints "after you used" for other players' bleeds and poisons,
         // so this is a tick whose owner the tracker looks up, with "you" only as a fallback.
@@ -236,7 +295,7 @@ public static class LogParser
 
     static CombatEvent? ParseSkillUse(string line)
     {
-        foreach (var rx in new[] { ContinuousRx, InflictEffectRx, OwnEffectRx, BecauseUsedRx })
+        foreach (var rx in new[] { ContinuousRx, InflictEffectRx, OwnEffectRx, AbsorbRx, BoostedHpRx, SelfDamageRx, BecauseUsedRx })
         {
             var m = rx.Match(line);
             if (!m.Success)
@@ -306,7 +365,8 @@ public static class LogParser
 
     static string NormalizeName(string name)
     {
-        name = name.Trim();
+        // Gamez sometimes wraps a name in a character the log can't print: "?Batte?".
+        name = name.Trim().Trim('?');
         return name.Equals("you", StringComparison.OrdinalIgnoreCase) ? You : name;
     }
 }

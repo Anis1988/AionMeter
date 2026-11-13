@@ -47,7 +47,7 @@ public static class Reporter
 
     /// <summary>Lines are the same report when only their time and numbers differ.</summary>
     static string Shape(string line) =>
-        Regex.Replace(line.Length > 22 ? line[22..] : line, @"\d[\d,]*", "#").Trim();
+        Regex.Replace(AionMeter.Core.LogParser.Body(line), @"\d[\d,]*", "#").Trim();
 
     /// <summary>
     /// Adds the local unread lines that aren't in the repo's file yet. Returns a short status message.
