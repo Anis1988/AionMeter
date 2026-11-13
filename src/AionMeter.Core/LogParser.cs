@@ -54,8 +54,9 @@ public static class LogParser
 
     const RegexOptions Options = RegexOptions.Compiled | RegexOptions.CultureInvariant;
 
-    // "2026.10.28 17:03:23 : Critical Strike!" (the crit prefix is optional)
-    const string Prefix = @"^(?<ts>\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) : (?<crit>Critical [A-Za-z]+(?: [A-Za-z]+)?!\s*)?";
+    // "2026.10.28 17:03:23 : Critical Strike!" (the crit prefix is optional). Since 12 Nov 2026 Gamez
+    // also prints milliseconds ("18:28:26.650"); they are accepted and ignored.
+    const string Prefix = @"^(?<ts>\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2})(?:\.\d+)? : (?<crit>Critical [A-Za-z]+(?: [A-Za-z]+)?!\s*)?";
     const string Amount = @"(?<dmg>\d[\d,.]*)";
 
     // "Lagoto inflicted 168 damage on Zoooog by reflecting the attack."
