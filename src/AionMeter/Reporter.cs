@@ -80,7 +80,8 @@ public static class Reporter
 
         var known = remote.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(Shape).ToHashSet();
         var fresh = (await File.ReadAllLinesAsync(localFile))
-            .Where(l => l.Trim().Length > 0 && known.Add(Shape(l)))
+            // Lines saved by an older version that this version can read aren't worth sending again.
+            .Where(l => l.Trim().Length > 0 && AionMeter.Core.LogParser.Parse(l) == null && known.Add(Shape(l)))
             .ToList();
         if (fresh.Count == 0)
             return "Up to date";
