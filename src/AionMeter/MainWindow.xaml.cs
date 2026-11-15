@@ -9,10 +9,9 @@ namespace AionMeter;
 public partial class MainWindow : Window
 {
     const double CubeSize = 68;     // cube plus its glow margin
-    const double CollapsedHeight = 44;
+    const double MeterMinWidth = 300, MeterMinHeight = 120;
 
     readonly MeterController controller;
-    readonly FilterPanel filters;
     readonly ObservableCollection<PickOption> targetOptions = [];
     readonly ObservableCollection<PickOption> classOptions = [];
     DetailsWindow? details;
@@ -25,8 +24,6 @@ public partial class MainWindow : Window
         InitializeComponent();
         LogoImage.Source = CubeLogo.Source = ClassIcons.Logo;
         Bars.ItemsSource = controller.OverlayRows;
-        filters = new FilterPanel(controller);
-        FilterHost.Child = filters;
         TargetBox.ItemsSource = targetOptions;
         ClassPickBox.ItemsSource = classOptions;
         BuildClassOptions();
@@ -37,7 +34,6 @@ public partial class MainWindow : Window
             Loaded += (_, _) => EnterCube();
     }
 
-    bool Collapsed => Body.Visibility != Visibility.Visible;
     bool InCube => Cube.Visibility == Visibility.Visible;
 
     void RestorePlacement()
@@ -78,6 +74,7 @@ public partial class MainWindow : Window
         TargetBox.IsEnabled = !healing;
         UpdateTargetOptions();
         HeaderInfo.Text = enc.IsEmpty ? "" : Format.Duration(secs);
+        TimerChip.Visibility = enc.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
         CubeText.Text = enc.IsEmpty ? "" : Format.Number(perSecond);
 
         var unread = controller.UnreadCount > 0 ? $"  ·  ⚠ {controller.UnreadCount} unread" : "";
@@ -166,8 +163,6 @@ public partial class MainWindow : Window
             details?.SelectPlayer(row.Key);
     }
 
-    void Details_Click(object sender, RoutedEventArgs e) => ShowDetails();
-
     void ShowDetails()
     {
         if (details == null)
@@ -182,12 +177,6 @@ public partial class MainWindow : Window
                 details.WindowState = WindowState.Normal;
             details.Activate();
         }
-    }
-
-    void Filter_Click(object sender, RoutedEventArgs e)
-    {
-        filters.Sync();
-        FilterPopup.IsOpen = !FilterPopup.IsOpen;
     }
 
     void Pause_Click(object sender, RoutedEventArgs e)
@@ -232,28 +221,6 @@ public partial class MainWindow : Window
 
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    /// <summary>Shrinks the overlay to just its title bar, or restores it.</summary>
-    void Collapse_Click(object sender, RoutedEventArgs e)
-    {
-        if (Collapsed)
-        {
-            Body.Visibility = FooterBar.Visibility = PickBar.Visibility = Visibility.Visible;
-            ResizeMode = ResizeMode.CanResizeWithGrip;
-            Height = expandedHeight;
-            CollapseButton.Content = "";
-            CollapseButton.ToolTip = "Collapse to title bar";
-        }
-        else
-        {
-            expandedHeight = Height;
-            Body.Visibility = FooterBar.Visibility = PickBar.Visibility = Visibility.Collapsed;
-            ResizeMode = ResizeMode.NoResize;
-            Height = CollapsedHeight;
-            CollapseButton.Content = "";
-            CollapseButton.ToolTip = "Expand";
-        }
-    }
-
     void Cube_Click(object sender, RoutedEventArgs e) => EnterCube();
 
     /// <summary>Hides everything behind a small cube; clicking it brings the meter back.</summary>
@@ -261,9 +228,7 @@ public partial class MainWindow : Window
     {
         if (InCube)
             return;
-        FilterPopup.IsOpen = false;
-        if (!Collapsed)
-            expandedHeight = Height;
+        expandedHeight = Height;
         expandedWidth = Width;
         Panel.Visibility = Visibility.Collapsed;
         Cube.Visibility = Visibility.Visible;
@@ -277,11 +242,11 @@ public partial class MainWindow : Window
     {
         Cube.Visibility = Visibility.Collapsed;
         Panel.Visibility = Visibility.Visible;
-        MinWidth = 320;
-        MinHeight = CollapsedHeight;
+        MinWidth = MeterMinWidth;
+        MinHeight = MeterMinHeight;
         Width = Math.Max(MinWidth, expandedWidth);
-        Height = Collapsed ? CollapsedHeight : Math.Max(120, expandedHeight);
-        ResizeMode = Collapsed ? ResizeMode.NoResize : ResizeMode.CanResizeWithGrip;
+        Height = Math.Max(MinHeight, expandedHeight);
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         controller.Settings.CubeMode = false;
     }
 
@@ -302,7 +267,7 @@ public partial class MainWindow : Window
             s.Left = Left;
             s.Top = Top;
             s.Width = InCube ? expandedWidth : Width;
-            s.Height = InCube || Collapsed ? expandedHeight : Height;
+            s.Height = InCube ? expandedHeight : Height;
         }
         controller.SaveLearned();
         base.OnClosing(e);

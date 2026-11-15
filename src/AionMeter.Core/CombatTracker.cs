@@ -322,6 +322,13 @@ public sealed class CombatTracker
         Version++;
     }
 
+    /// <summary>
+    /// The catch-all rows for damage or healing the log doesn't say who did (a tick whose caster
+    /// was never seen, a summon with no known owner). They're kept for the totals but aren't players.
+    /// </summary>
+    public static bool IsUnattributed(string name) =>
+        name == UnknownDotName || name == UnknownHotName || name == UnknownSummonName;
+
     public static bool IsMonsterName(string name) =>
         name != LogParser.You && name != UnknownDotName && name != UnknownHotName && name != UnknownSummonName
         && !PlayerName.IsMatch(name);

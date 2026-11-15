@@ -14,7 +14,7 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 - Healing meter: switch between damage and healing with one click (heals over time credited to the caster)
 - DoT ticks credited to whoever applied them; summons (spirits, servants, traps) are added to their owner's damage instead of showing up as players
 - Damage taken, pause and reset
-- Filter by class
+- Filter by class (in the full list)
 - Two dropdowns on the meter: pick a mob, boss or player to rank everyone's damage on just that target (with its own DPS time), and pick a class to rank just that class
 - Bosses are detected automatically and shown in red with **BOSS** in front of the name
 - Shrink the whole meter into a tiny cube and click it to bring it back
@@ -36,16 +36,15 @@ Aion Meter empties `Chat.log` each time it starts (like ARM), so the log never g
 
 | Button | Action |
 |---|---|
-| DMG / HEAL | Switch between ranking by damage and by healing |
+| Logo (top left) | Shrink everything into a tiny cube; click the cube to restore it, drag it to move it |
 | ⏸ | Pause / resume counting |
 | ⧉ | Copy the top players' damage to the clipboard (top 10 by default, change it in settings; 0 = everyone) |
 | ⟳ | Reset: clear everything and start over |
-| ☰ | Full list (same as clicking the overlay) |
-| ⚙ | Settings |
-| Filter | Show or hide each class |
-| ⌃ | Collapse to just the title bar (click again to expand) |
-| Cube | Shrink everything into a tiny cube; click the cube to restore it, drag it to move it |
+| ✕ | Close |
+| DMG / HEAL (bottom left) | Switch between ranking by damage and by healing |
+| ⚙ (bottom right) | Settings |
 
+- Click any row on the meter to open the full list (it has the class filter).
 - Drag the title bar to move the overlay and the bottom-right corner to resize it.
 - Damage never resets on its own; press ⟳ to start over. Breaks longer than 15 seconds don't count toward DPS time.
 - The full list also has a **Copy** button that uses the same setting.

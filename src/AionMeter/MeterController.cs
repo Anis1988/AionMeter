@@ -182,9 +182,11 @@ public sealed class MeterController
 
     /// <summary>
     /// Whether a combatant is listed: players only (monsters and bosses are never ranked; they
-    /// only appear as targets in the dropdown), minus any class hidden by the filter.
+    /// only appear as targets in the dropdown, and "Other (DoT)" style rows aren't anyone),
+    /// minus any class hidden by the full list's filter.
     /// </summary>
-    public bool IsVisible(Combatant c) => !c.IsMonster && !Settings.HiddenClasses.Contains(c.Class);
+    public bool IsVisible(Combatant c) =>
+        !c.IsMonster && !CombatTracker.IsUnattributed(c.Name) && !Settings.HiddenClasses.Contains(c.Class);
 
     /// <summary>Filtered ranking for the current mode.</summary>
     public IReadOnlyList<Combatant> Visible(Encounter enc) =>

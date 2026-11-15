@@ -96,6 +96,22 @@ public sealed class CombatantRow(string key) : Observable
     public Brush NameBrush => IsBoss ? ClassIcons.BossBrush : System.Windows.Media.Brushes.White;
     public Visibility YouVisibility => IsYou ? Visibility.Visible : Visibility.Collapsed;
 
+    static readonly Brush[] Medals = Freeze(
+        new SolidColorBrush(Color.FromRgb(0xFF, 0xD1, 0x4A)),   // gold
+        new SolidColorBrush(Color.FromRgb(0xD5, 0xDD, 0xE8)),   // silver
+        new SolidColorBrush(Color.FromRgb(0xE0, 0x93, 0x5A)));  // bronze
+    static readonly Brush OtherRank = Freeze(new SolidColorBrush(Color.FromArgb(0xB3, 0xE6, 0xED, 0xF7)))[0];
+
+    static Brush[] Freeze(params Brush[] brushes)
+    {
+        foreach (var b in brushes)
+            b.Freeze();
+        return brushes;
+    }
+
+    /// <summary>Gold, silver and bronze for the top three.</summary>
+    public Brush RankBrush => Rank is >= 1 and <= 3 ? Medals[Rank - 1] : OtherRank;
+
     public string DamageText => Format.Number(Damage);
     public string DpsText => Format.Number(Dps);
     public string PercentText => Format.Percent(Percent);
@@ -131,7 +147,7 @@ public sealed class CombatantRow(string key) : Observable
         foreach (var p in new[] { nameof(DamageText), nameof(DpsText), nameof(PercentText), nameof(CritText),
                      nameof(MaxHitText), nameof(HealingText), nameof(HpsText), nameof(ValueText), nameof(Summary),
                      nameof(YouVisibility), nameof(ClassName), nameof(Icon), nameof(ClassBrush), nameof(NameBrush),
-                     nameof(PerSecondText), nameof(PercentShort) })
+                     nameof(PerSecondText), nameof(PercentShort), nameof(RankBrush) })
             Raise(p);
     }
 
