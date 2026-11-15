@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Icon="app.ico"
-        Title="Aion Meter" Width="370" Height="300" MinWidth="300" MinHeight="120"
+        Title="Aion Meter" Width="390" Height="300" MinWidth="350" MinHeight="120"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ResizeMode="CanResizeWithGrip"
         FontFamily="{StaticResource UiFont}" FontSize="12"
@@ -49,7 +49,7 @@
                                     <TextBlock x:Name="HeaderInfo" FontSize="10.5" Foreground="#CCE6EDF7" />
                                 </Border>
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,6,0"
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,4,0"
                                         VerticalAlignment="Center">
                                 <Button x:Name="PauseButton" Style="{StaticResource ColorIconButton}" Content="&#xE769;"
                                         Foreground="{StaticResource PauseColor}" ToolTip="Pause" Click="Pause_Click" />
@@ -59,8 +59,8 @@
                                 <Button Style="{StaticResource ColorIconButton}" Content="&#xE72C;"
                                         Foreground="{StaticResource ResetColor}" ToolTip="Reset (start over)"
                                         Click="Reset_Click" />
-                                <Rectangle Width="1" Height="16" Margin="4,0" Fill="#33FFFFFF" />
-                                <Button Style="{StaticResource ColorIconButton}" Content="&#xE8BB;" FontSize="11"
+                                <Rectangle Width="1" Height="20" Margin="4,0" Fill="#33FFFFFF" />
+                                <Button Style="{StaticResource ColorIconButton}" Content="&#xE8BB;" FontSize="12.5"
                                         Foreground="{StaticResource CloseColor}" ToolTip="Close" Click="Close_Click" />
                             </StackPanel>
                         </Grid>
@@ -86,14 +86,14 @@
                     </Grid>
 
                     <!-- Footer: mode switch, totals, settings (left of the resize grip) -->
-                    <Border x:Name="FooterBar" DockPanel.Dock="Bottom" Height="30" Background="#0DFFFFFF"
+                    <Border x:Name="FooterBar" DockPanel.Dock="Bottom" Height="36" Background="#0DFFFFFF"
                             BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0"
                             CornerRadius="0,0,11,11" Padding="7,0,16,0">
                         <DockPanel VerticalAlignment="Center">
                             <Button x:Name="ModeButton" DockPanel.Dock="Left" Style="{StaticResource ChipButton}"
                                     Content="DMG" Click="Mode_Click" />
                             <Button DockPanel.Dock="Right" Style="{StaticResource ColorIconButton}" Content="&#xE713;"
-                                    Height="22" Width="25" Foreground="{StaticResource SettingsColor}"
+                                    Height="28" Width="38" Foreground="{StaticResource SettingsColor}"
                                     ToolTip="Settings" Click="Settings_Click" />
                             <TextBlock x:Name="Footer" Margin="8,0,4,0" FontSize="11" Foreground="#CCE6EDF7"
                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />

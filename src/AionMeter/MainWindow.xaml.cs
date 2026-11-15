@@ -9,7 +9,7 @@ namespace AionMeter;
 public partial class MainWindow : Window
 {
     const double CubeSize = 68;     // cube plus its glow margin
-    const double MeterMinWidth = 300, MeterMinHeight = 120;
+    const double MeterMinWidth = 350, MeterMinHeight = 120;
 
     readonly MeterController controller;
     readonly ObservableCollection<PickOption> targetOptions = [];
