@@ -79,25 +79,51 @@
             </Setter>
         </Style>
 
-        <!-- Borderless icon button (header and footer): lights up on hover -->
-        <Style x:Key="FlatIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Width" Value="26" />
+        <!-- Colour-coded icon button: set Foreground and the tint, outline and glyph all follow it -->
+        <Style x:Key="ColorIconButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Width" Value="27" />
+            <Setter Property="Height" Value="25" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform />
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" CornerRadius="6" Background="Transparent">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
+                        <Grid>
+                            <Border x:Name="Fill" CornerRadius="7" Background="{TemplateBinding Foreground}"
+                                    Opacity="0.16" />
+                            <Border x:Name="Outline" CornerRadius="7" BorderBrush="{TemplateBinding Foreground}"
+                                    BorderThickness="1" Opacity="0.55" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ContentPresenter.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.6" Color="Black" />
+                                </ContentPresenter.Effect>
+                            </ContentPresenter>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#2200E5FF" />
-                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Fill" Property="Opacity" Value="0.34" />
+                                <Setter TargetName="Outline" Property="Opacity" Value="1" />
                                 <Setter Property="RenderTransform">
                                     <Setter.Value>
-                                        <ScaleTransform ScaleX="0.88" ScaleY="0.88" />
+                                        <ScaleTransform ScaleX="1.08" ScaleY="1.08" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Fill" Property="Opacity" Value="0.5" />
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9" />
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -107,24 +133,12 @@
             </Setter>
         </Style>
 
-        <!-- Close: same as above but turns red -->
-        <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource FlatIconButton}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" CornerRadius="6" Background="Transparent">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#CCE5484D" />
-                                <Setter Property="Foreground" Value="White" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <SolidColorBrush x:Key="PauseColor" Color="#FFFFB547" />
+        <SolidColorBrush x:Key="PlayColor" Color="#FF4ADE80" />
+        <SolidColorBrush x:Key="CopyColor" Color="#FF38D9F5" />
+        <SolidColorBrush x:Key="ResetColor" Color="#FFB794FF" />
+        <SolidColorBrush x:Key="CloseColor" Color="#FFFF6B6B" />
+        <SolidColorBrush x:Key="SettingsColor" Color="#FFF472B6" />
 
         <!-- The logo in the header: click to shrink the meter to the cube -->
         <Style x:Key="LogoButton" TargetType="Button">

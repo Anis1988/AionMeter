@@ -12,7 +12,7 @@ It reads the game's `Chat.log`, the same way Aion RainMeter does, and never touc
 - Keeps adding up until you press Reset (idle time doesn't lower your DPS)
 - Copy everyone's damage to the clipboard in one click, ready to paste in Discord or chat
 - Healing meter: switch between damage and healing with one click (heals over time credited to the caster)
-- DoT ticks credited to whoever applied them; summons (spirits, servants, traps) are added to their owner's damage instead of showing up as players
+- DoT ticks credited to whoever applied them (ticks whose caster the log never shows are ignored); summons (spirits, servants, traps) are added to their owner's damage instead of showing up as players
 - Damage taken, pause and reset
 - Filter by class (in the full list)
 - Two dropdowns on the meter: pick a mob, boss or player to rank everyone's damage on just that target (with its own DPS time), and pick a class to rank just that class

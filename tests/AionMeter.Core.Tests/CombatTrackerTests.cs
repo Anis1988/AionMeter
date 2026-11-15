@@ -85,7 +85,7 @@ public class CombatTrackerTests
             "2026.10.28 17:02:12 : Mob A received 300 damage due to the effect of Unknown Curse.");
 
         Assert.Equal(800, t.Current.Combatants[LogParser.You].Damage);
-        Assert.Equal(300, t.Current.Combatants[CombatTracker.UnknownDotName].Damage);
+        Assert.DoesNotContain(CombatTracker.UnknownDotName, t.Current.Combatants.Keys);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class CombatTrackerTests
             "2026.10.28 17:00:02 : Grop recovered 50 HP due to the effect of Mystery Regen.");
 
         Assert.Equal(1200, t.Current.Combatants["Lumi"].Healing);
-        Assert.Equal(50, t.Current.Combatants[CombatTracker.UnknownHotName].Healing);
+        Assert.DoesNotContain(CombatTracker.UnknownHotName, t.Current.Combatants.Keys);
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class CombatTrackerTests
             "2026.10.28 17:00:01 : Kai inflicted 900 damage on Mob A by using Spirit Erosion.",
             "2026.10.28 17:00:02 : Earth Spirit inflicted 400 damage on Mob A.");
 
-        Assert.Equal(400, t.Current.Combatants[CombatTracker.UnknownSummonName].Damage);
+        Assert.DoesNotContain(CombatTracker.UnknownSummonName, t.Current.Combatants.Keys);
         Assert.DoesNotContain("Earth Spirit", t.Current.Combatants.Keys);
     }
 

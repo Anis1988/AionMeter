@@ -182,7 +182,8 @@ public partial class MainWindow : Window
     void Pause_Click(object sender, RoutedEventArgs e)
     {
         controller.Paused = !controller.Paused;
-        PauseButton.Content = controller.Paused ? "" : "";
+        PauseButton.Content = controller.Paused ? "\uE768" : "\uE769";   // play / pause glyphs
+        PauseButton.Foreground = (Brush)FindResource(controller.Paused ? "PlayColor" : "PauseColor");
         PauseButton.ToolTip = controller.Paused ? "Resume" : "Pause";
     }
 

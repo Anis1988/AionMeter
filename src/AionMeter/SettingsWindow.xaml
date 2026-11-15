@@ -2,91 +2,253 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Icon="app.ico"
-        Title="Aion Meter - Settings" Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        Title="Aion Meter - Settings" Width="520" SizeToContent="Height" ResizeMode="NoResize"
         Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
-        FontFamily="{StaticResource UiFont}" FontSize="12" WindowStartupLocation="CenterOwner">
-    <StackPanel Margin="14">
-        <TextBlock Text="Game folder (where Chat.log and system.cfg are)" Margin="0,0,0,4" />
-        <Grid Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBox x:Name="GamePathBox" Padding="3" />
-            <Button Grid.Column="1" Content="Browse..." Margin="6,0,0,0" Style="{StaticResource DarkButton}"
-                    Click="Browse_Click" />
-        </Grid>
-        <TextBlock x:Name="PathStatus" Margin="0,-8,0,12" FontSize="11" />
+        FontFamily="{StaticResource UiFont}" FontSize="12" WindowStartupLocation="CenterOwner"
+        TextOptions.TextFormattingMode="Display" UseLayoutRounding="True">
+    <Window.Resources>
+        <!-- Dark text fields -->
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="CaretBrush" Value="White" />
+            <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Bd" CornerRadius="6" Background="#14FFFFFF" BorderBrush="#33FFFFFF"
+                                BorderThickness="1">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#6600E5FF" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Bd" Property="Background" Value="#1A00E5FF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="PasswordBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="CaretBrush" Value="White" />
+            <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="Bd" CornerRadius="6" Background="#14FFFFFF" BorderBrush="#33FFFFFF"
+                                BorderThickness="1">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#6600E5FF" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Bd" Property="Background" Value="#1A00E5FF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <Grid Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="Your character name" Margin="0,0,0,4" />
-                <TextBox x:Name="NameBox" Padding="3" />
+        <!-- One card per group of settings -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="#0CFFFFFF" />
+            <Setter Property="BorderBrush" Value="#1AFFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,10,12,12" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="CardIcon" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFB8C7DD" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Title -->
+        <Border DockPanel.Dock="Top" Padding="16,12" Background="{StaticResource HeaderGradient}">
+            <StackPanel Orientation="Horizontal">
+                <Border Width="30" Height="30" CornerRadius="8" Background="#26F472B6" BorderBrush="{StaticResource SettingsColor}"
+                        BorderThickness="1">
+                    <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" FontSize="15"
+                               Foreground="{StaticResource SettingsColor}" HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Settings" FontSize="16" FontWeight="SemiBold" Foreground="White" />
+                    <TextBlock Text="Aion Meter" FontSize="11" Foreground="{StaticResource AccentBrush}" />
+                </StackPanel>
             </StackPanel>
-            <StackPanel Grid.Column="2">
-                <TextBlock Text="Your class" Margin="0,0,0,4" />
-                <ComboBox x:Name="ClassBox" />
+        </Border>
+        <Border DockPanel.Dock="Top" Height="1" Background="{StaticResource AccentGradient}" Opacity="0.5" />
+
+        <!-- Save / Cancel -->
+        <Border DockPanel.Dock="Bottom" Padding="16,10" Background="#0AFFFFFF" BorderBrush="#1AFFFFFF"
+                BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" IsCancel="True" Style="{StaticResource DarkButton}" Padding="18,6" />
+                <Button Content="Save" IsDefault="True" Margin="8,0,0,0" Style="{StaticResource DarkButton}"
+                        Padding="22,6" FontWeight="SemiBold" Click="Save_Click" />
             </StackPanel>
-        </Grid>
+        </Border>
 
-        <TextBlock Text="Players to copy with the Copy button (0 = everyone)" Margin="0,0,0,4" />
-        <TextBox x:Name="CopyCountBox" Width="80" HorizontalAlignment="Left" Padding="3" Margin="0,0,0,12" />
+        <StackPanel Margin="16,14,16,4">
+            <!-- Game -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Style="{StaticResource CardIcon}" Text="&#xE7FC;" Foreground="{StaticResource CopyColor}" />
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Game" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Label}" Text="Game folder (where Chat.log and system.cfg are)" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="GamePathBox" />
+                        <Button Grid.Column="1" Content="Browse..." Margin="6,0,0,0" Padding="12,4"
+                                Style="{StaticResource DarkButton}" Click="Browse_Click" />
+                    </Grid>
+                    <TextBlock x:Name="PathStatus" Margin="0,5,0,10" FontSize="11" />
 
-        <TextBlock Text="Boss detection: damage a monster takes in one life to count as a boss" Margin="0,0,0,4" />
-        <TextBox x:Name="BossBox" Width="120" HorizontalAlignment="Left" Padding="3" Margin="0,0,0,12" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Label}" Text="Your character name" />
+                            <TextBox x:Name="NameBox" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource Label}" Text="Your class" />
+                            <ComboBox x:Name="ClassBox" Style="{StaticResource DarkCombo}" Height="28" FontSize="12" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
 
-        <TextBlock Text="Window opacity" Margin="0,0,0,4" />
-        <Slider x:Name="OpacitySlider" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
-                Margin="0,0,0,12" />
+            <!-- Meter -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Style="{StaticResource CardIcon}" Text="&#xE9D9;" Foreground="{StaticResource PauseColor}" />
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Meter" />
+                    </StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Label}" Text="Players to copy (0 = everyone)" />
+                            <TextBox x:Name="CopyCountBox" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource Label}" Text="Boss: damage taken in one life" />
+                            <TextBox x:Name="BossBox" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Style="{StaticResource Label}" Text="Window opacity" />
+                    <Slider x:Name="OpacitySlider" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                            Margin="0,0,0,10" />
+                    <CheckBox x:Name="SummonsBox" Content="Count my summons (spirits, servants) as my damage" />
+                </StackPanel>
+            </Border>
 
-        <CheckBox x:Name="ClearLogBox" Content="Clear Chat.log when the meter starts (keeps the game from stuttering on a huge log)"
-                  Margin="0,0,0,6" />
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Content="Clear Chat.log now" Style="{StaticResource DarkButton}" Padding="10,4"
-                    Click="ClearLog_Click" />
-            <TextBlock x:Name="LogSizeText" Margin="10,0,0,0" VerticalAlignment="Center"
-                       Foreground="{StaticResource MutedBrush}" />
+            <!-- Chat log -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Style="{StaticResource CardIcon}" Text="&#xE8BD;" Foreground="{StaticResource PlayColor}" />
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Chat log" />
+                    </StackPanel>
+                    <CheckBox x:Name="ClearLogBox" Margin="0,0,0,8">
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Clear Chat.log when the meter starts (keeps the game from stuttering on a huge log)" />
+                    </CheckBox>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Clear Chat.log now" Style="{StaticResource DarkButton}" Padding="12,4"
+                                Click="ClearLog_Click" />
+                        <TextBlock x:Name="LogSizeText" Margin="10,0,0,0" Style="{StaticResource Hint}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Unread lines -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Style="{StaticResource CardIcon}" Text="&#xE7BA;" Foreground="{StaticResource ResetColor}" />
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Unread lines" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Label}"
+                               Text="Damage lines the meter couldn't read. Send them in so they can be added." />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,12">
+                        <Button Content="Open unread lines" Style="{StaticResource DarkButton}" Padding="12,4"
+                                Click="OpenUnread_Click" />
+                        <TextBlock x:Name="UnreadText" Margin="10,0,0,0" Style="{StaticResource Hint}" />
+                    </StackPanel>
+                    <CheckBox x:Name="AutoReportBox" Content="Send unread lines to my private GitHub repo every hour"
+                              Margin="0,0,0,8" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Label}" Text="Repo (owner/name)" />
+                            <TextBox x:Name="ReportRepoBox" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource Label}" Text="GitHub token" />
+                            <PasswordBox x:Name="ReportTokenBox" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Send now" Style="{StaticResource DarkButton}" Padding="12,4"
+                                Click="SendNow_Click" />
+                        <TextBlock x:Name="ReportStatusText" Margin="10,0,0,0" MaxWidth="330"
+                                   Style="{StaticResource Hint}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </StackPanel>
-        <TextBlock Text="Lines the meter couldn't read (send this file in so they can be added)" Margin="0,0,0,4" />
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Content="Open unread lines" Style="{StaticResource DarkButton}" Padding="10,4"
-                    Click="OpenUnread_Click" />
-            <TextBlock x:Name="UnreadText" Margin="10,0,0,0" VerticalAlignment="Center"
-                       Foreground="{StaticResource MutedBrush}" />
-        </StackPanel>
-        <CheckBox x:Name="AutoReportBox" Content="Send unread lines to my private GitHub repo every hour"
-                  Margin="0,0,0,6" />
-        <Grid Margin="0,0,0,6">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="Repo (owner/name)" Margin="0,0,0,4" />
-                <TextBox x:Name="ReportRepoBox" Padding="3" />
-            </StackPanel>
-            <StackPanel Grid.Column="2">
-                <TextBlock Text="GitHub token" Margin="0,0,0,4" />
-                <PasswordBox x:Name="ReportTokenBox" Padding="3" />
-            </StackPanel>
-        </Grid>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Content="Send now" Style="{StaticResource DarkButton}" Padding="10,4" Click="SendNow_Click" />
-            <TextBlock x:Name="ReportStatusText" Margin="10,0,0,0" VerticalAlignment="Center"
-                       Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-        </StackPanel>
-        <CheckBox x:Name="SummonsBox" Content="Count my summons (spirits, servants) as my damage"
-                  Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
-
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Save" IsDefault="True" Style="{StaticResource DarkButton}" Click="Save_Click" />
-            <Button Content="Cancel" IsCancel="True" Margin="8,0,0,0" Style="{StaticResource DarkButton}" />
-        </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </Window>

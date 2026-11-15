@@ -145,13 +145,9 @@ public sealed class CombatTracker
             Version++;
         }
 
+        // A tick whose caster was never seen can't be given to anyone, so it's ignored.
         if (owner == null)
-        {
-            // An unowned tick on a player is most likely a monster's DoT; skip it.
-            if (!IsMonsterName(e.Target))
-                return;
-            owner = UnknownDotName;
-        }
+            return;
         var petMatch = OwnedPet.Match(owner);
         if (petMatch.Success)
         {
@@ -163,7 +159,9 @@ public sealed class CombatTracker
                  && !AttacksPlayer(e.Target))
         {
             skill = PetSkill(owner, skill);
-            owner = SummonOwner(owner) ?? UnknownSummonName;
+            owner = SummonOwner(owner);
+            if (owner == null)
+                return;   // a summon whose owner isn't known: nobody to credit
             learnable = false;
         }
 
@@ -202,7 +200,9 @@ public sealed class CombatTracker
 
         if (e.Kind == CombatEventKind.HealOverTime)
         {
-            healer = FindOwner(hotOwners, lastHealer, e.Target, skill) ?? UnknownHotName;
+            healer = FindOwner(hotOwners, lastHealer, e.Target, skill);
+            if (healer == null)
+                return;   // a heal-over-time tick whose caster was never seen
             learnable = false;
         }
         else if (skill != null)
