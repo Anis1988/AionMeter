@@ -198,6 +198,9 @@
                         <TextBlock Style="{StaticResource CardIcon}" Text="&#xE8BD;" Foreground="{StaticResource PlayColor}" />
                         <TextBlock Style="{StaticResource CardTitle}" Text="Chat log" />
                     </StackPanel>
+                    <CheckBox x:Name="StartupBox" Margin="0,0,0,8">
+                        <TextBlock TextWrapping="Wrap" Text="Start Aion Meter when I log in to Windows" />
+                    </CheckBox>
                     <CheckBox x:Name="ClearLogBox" Margin="0,0,0,8">
                         <TextBlock TextWrapping="Wrap"
                                    Text="Clear Chat.log when the meter starts (keeps the game from stuttering on a huge log)" />

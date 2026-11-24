@@ -27,6 +27,7 @@ public partial class SettingsWindow : Window
         OpacitySlider.Value = settings.Opacity;
         SummonsBox.IsChecked = settings.MergeSummons;
         ClearLogBox.IsChecked = settings.ClearChatLogOnStart;
+        StartupBox.IsChecked = Startup.IsEnabled;
         AutoReportBox.IsChecked = settings.AutoReport;
         ReportRepoBox.Text = settings.ReportRepo;
         ReportTokenBox.Password = Reporter.Unprotect(settings.ReportTokenProtected);
@@ -123,6 +124,7 @@ public partial class SettingsWindow : Window
         settings.Opacity = OpacitySlider.Value;
         settings.MergeSummons = SummonsBox.IsChecked == true;
         settings.ClearChatLogOnStart = ClearLogBox.IsChecked == true;
+        Startup.Set(StartupBox.IsChecked == true);
         SaveReportFields();
         DialogResult = true;
     }
